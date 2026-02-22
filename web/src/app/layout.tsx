@@ -1,18 +1,36 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Bebas_Neue, Noto_Sans_JP } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SITE } from "@/lib/constants";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/**
+ * Plus Jakarta Sans: メインフォント（ラテン文字・数字の視認性が高い）
+ */
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+/**
+ * Bebas Neue: スコア・ディスプレイ用（スポーツ放送風の凝縮フォント）
+ */
+const bebas = Bebas_Neue({
+  variable: "--font-bebas",
+  weight: "400",
   subsets: ["latin"],
+  display: "swap",
+});
+
+/**
+ * Noto Sans JP: 日本語フォント
+ */
+const notoSansJP = Noto_Sans_JP({
+  variable: "--font-noto-jp",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -23,6 +41,11 @@ export const metadata: Metadata = {
   description: `${SITE.concept}。横浜エクセレンス（B.LEAGUE B2）の試合結果・選手スタッツ・チーム成績を一箇所に集約。`,
 };
 
+/**
+ * ルートレイアウト
+ *
+ * 全ページ共通のヘッダー・フッター・フォント設定を提供する。
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -31,7 +54,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${jakarta.variable} ${bebas.variable} ${notoSansJP.variable} antialiased`}
       >
         <div className="flex min-h-screen flex-col">
           <Header />
