@@ -1,0 +1,87 @@
+# ================================================
+# STAT-EX CI（継続的インテグレーション）
+#
+# PR作成時・mainへのpush時に実行
+# 型チェック・lint・テスト・ビルドを検証する
+# ================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ========================================
+  # フロントエンド（Next.js）
+  # ========================================
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: pnpm をセットアップ
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Node.js をセットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: 依存関係をインストール
+        run: pnpm install --frozen-lockfile
+
+      - name: 型チェック
+        run: pnpm type-check
+
+      - name: ESLint
+        run: pnpm lint
+
+      - name: Prettier チェック
+        run: pnpm format:check
+
+      - name: ユニットテスト
+        run: pnpm test:run
+
+      - name: ビルド
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder-key"
+
+  # ========================================
+  # スクレイパー（Python）
+  # ========================================
+  scraper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python をセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: scraper/requirements.txt
+
+      - name: 依存関係をインストール
+        run: pip install -r scraper/requirements.txt
+
+      - name: テスト
+        run: pytest scraper/tests/ -v
