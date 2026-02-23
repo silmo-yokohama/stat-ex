@@ -776,7 +776,13 @@ def _register_new_player(
     """
     bleague_pid = str(player_stats.get("player_id", ""))
     player_name = player_stats.get("player_name", "不明")
+    # player_number が空文字列の場合はNoneに変換（DBカラムは INTEGER 型）
     player_number = player_stats.get("player_number")
+    if player_number is not None:
+        try:
+            player_number = int(player_number)
+        except (ValueError, TypeError):
+            player_number = None
 
     try:
         res = client.table("players").insert({
