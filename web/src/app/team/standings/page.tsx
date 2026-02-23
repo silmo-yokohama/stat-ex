@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getStandings } from "@/lib/data";
+import { Icon } from "@/components/ui/Icon";
 import {
   Table,
   TableBody,
@@ -41,7 +42,7 @@ export default async function StandingsPage() {
     <div className="space-y-6">
       {/* ページタイトル */}
       <div>
-        <h1 className="text-2xl font-bold">B2順位表</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold"><Icon name="leaderboard" size={24} className="text-primary" />B2順位表</h1>
         <p className="text-sm text-muted-foreground">
           2025-26シーズン
         </p>

@@ -16,13 +16,13 @@ export const TEAM = {
   shortName: "横浜EX",
 } as const;
 
-/** ナビゲーション項目 */
+/** ナビゲーション項目（icon は Material Symbols のアイコン名） */
 export const NAV_ITEMS = [
-  { href: "/", label: "ダッシュボード" },
-  { href: "/games", label: "試合" },
-  { href: "/players", label: "選手" },
-  { href: "/team", label: "チーム" },
-  { href: "/mascot", label: "マスコット" },
+  { href: "/", label: "ダッシュボード", icon: "dashboard" },
+  { href: "/games", label: "試合", icon: "sports_basketball" },
+  { href: "/players", label: "選手", icon: "group" },
+  { href: "/team", label: "チーム", icon: "bar_chart" },
+  { href: "/mascot", label: "マスコット", icon: "pets" },
 ] as const;
 
 /** チケット購入URL */

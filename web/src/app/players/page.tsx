@@ -3,7 +3,9 @@ import Link from "next/link";
 import { getPlayers } from "@/lib/data";
 import { getAllPlayerAverages } from "@/lib/data/players";
 import { Badge } from "@/components/ui/badge";
+import { Icon } from "@/components/ui/Icon";
 import { PlayersScatterChart } from "@/components/players/PlayerCharts";
+import { PlayerAvatar } from "@/components/players/PlayerAvatar";
 import type { Player } from "@/lib/types/database";
 import type { PlayerSeasonAverage } from "@/lib/mock-data";
 
@@ -25,18 +27,6 @@ const POSITION_BADGE_COLORS: Record<string, string> = {
 };
 
 /**
- * ポジション別の上辺アクセントボーダーカラー
- * 選手カードにポジションを視覚的に示す色付きボーダーを追加する
- */
-const POSITION_BORDER_COLORS: Record<string, string> = {
-  PG: "border-t-3 border-t-blue-400",
-  SG: "border-t-3 border-t-green-400",
-  SF: "border-t-3 border-t-orange-400",
-  PF: "border-t-3 border-t-red-400",
-  C: "border-t-3 border-t-purple-400",
-};
-
-/**
  * ポジションのバッジ背景色を取得する
  *
  * @param position - 選手のポジション（PG, SG, SF, PF, C）
@@ -48,63 +38,64 @@ function getPositionBadgeColor(position: string | null): string {
 }
 
 /**
- * ポジション別の上辺ボーダー色を取得する
+ * 選手ロウカードコンポーネント（1カラムレイアウト）
  *
- * @param position - 選手のポジション（PG, SG, SF, PF, C）
- * @returns Tailwindクラス文字列（ボーダー未設定時は空文字）
- */
-function getPositionBorderColor(position: string | null): string {
-  if (!position) return "";
-  return POSITION_BORDER_COLORS[position] ?? "";
-}
-
-/**
- * 選手カードコンポーネント
- *
- * 選手の背番号・名前・ポジション・主要スタッツ（PPG, RPG, APG）を表示する。
- * ポジション別に上辺のアクセントカラーボーダーを付与し、
+ * 横長の1行カードで、左にアバター画像、中央に選手情報、右にスタッツを表示。
  * クリックで選手詳細ページへ遷移する。
  */
-function PlayerCard({
+function PlayerRow({
   player,
   average,
 }: {
   player: Player;
   average: (PlayerSeasonAverage & { player: Player }) | undefined;
 }) {
-  const borderClass = getPositionBorderColor(player.position);
-
   return (
     <Link
       href={`/players/${player.id}`}
-      className={`group rounded-xl border border-border bg-card p-5 transition-shadow hover:shadow-md ${borderClass}`}
+      className="group flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-md sm:gap-5 sm:p-5"
     >
-      {/* 背番号とポジション */}
-      <div className="mb-3 flex items-start justify-between">
-        <span className="font-display text-4xl leading-none text-[#006d3b]">
-          #{player.number ?? "-"}
-        </span>
-        {player.position && (
-          <Badge
-            variant="outline"
-            className={`border-0 ${getPositionBadgeColor(player.position)}`}
-          >
-            {player.position}
-          </Badge>
+      {/* 選手アバター画像 */}
+      <PlayerAvatar player={player} size="lg" />
+
+      {/* 選手情報（名前・背番号・ポジション） */}
+      <div className="min-w-0 flex-1">
+        <div className="mb-1 flex items-center gap-2">
+          <span className="font-display text-2xl leading-none text-[#006d3b]">
+            #{player.number ?? "-"}
+          </span>
+          {player.position && (
+            <Badge
+              variant="outline"
+              className={`border-0 ${getPositionBadgeColor(player.position)}`}
+            >
+              {player.position}
+            </Badge>
+          )}
+        </div>
+        <p className="text-base font-semibold text-foreground group-hover:text-[#006d3b]">
+          {player.name}
+        </p>
+        {player.name_en && (
+          <p className="text-xs text-muted-foreground">{player.name_en}</p>
         )}
+        {/* モバイル: 身長・体重 */}
+        <div className="mt-1 flex gap-3 text-xs text-muted-foreground sm:hidden">
+          {player.height && <span>{player.height}cm</span>}
+          {player.weight && <span>{player.weight}kg</span>}
+        </div>
       </div>
 
-      {/* 選手名 */}
-      <p className="mb-1 text-base font-semibold text-foreground group-hover:text-[#006d3b]">
-        {player.name}
-      </p>
-      {player.name_en && (
-        <p className="mb-4 text-xs text-muted-foreground">{player.name_en}</p>
-      )}
+      {/* 身体情報（デスクトップのみ） */}
+      <div className="hidden shrink-0 text-right text-xs text-muted-foreground sm:block">
+        {player.height && <p>{player.height}cm</p>}
+        {player.weight && <p>{player.weight}kg</p>}
+        {player.birthplace && <p>{player.birthplace}</p>}
+      </div>
 
       {/* 主要スタッツ（PPG, RPG, APG） */}
       {average && (
-        <div className="grid grid-cols-3 gap-2 border-t border-border pt-3">
+        <div className="hidden shrink-0 gap-5 sm:flex">
           <StatItem label="PPG" value={average.ppg} />
           <StatItem label="RPG" value={average.rpg} />
           <StatItem label="APG" value={average.apg} />
@@ -122,7 +113,7 @@ function PlayerCard({
 function StatItem({ label, value }: { label: string; value: number }) {
   return (
     <div className="text-center">
-      <p className="font-display text-lg leading-tight">{value.toFixed(1)}</p>
+      <p className="font-display text-2xl leading-tight">{value.toFixed(1)}</p>
       <p className="text-[10px] text-muted-foreground">{label}</p>
     </div>
   );
@@ -133,9 +124,8 @@ function StatItem({ label, value }: { label: string; value: number }) {
  *
  * ロスター全体を把握し、主要スタッツを比較するページ。
  * - スタッツ分布散布図（PPG vs RPG、バブルサイズ = APG）
- * - 選手カードグリッド（2列モバイル / 3列タブレット / 4列デスクトップ）
- * - 各カードに背番号・名前・ポジションバッジ・PPG/RPG/APG
- * - ポジション別アクセントカラーボーダー
+ * - 1カラムのロスターリスト（選手画像 + 名前 + スタッツ）
+ * - 各カードにポジション別カラーのアバター画像
  * - カードをクリックすると選手詳細ページへ遷移
  */
 export default async function PlayersPage() {
@@ -166,22 +156,22 @@ export default async function PlayersPage() {
 
       {/* スタッツ分布チャート */}
       <section className="rounded-xl border border-border bg-card p-6">
-        <h2 className="mb-4 text-lg font-semibold">スタッツ分布</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="scatter_plot" size={20} className="text-primary" />スタッツ分布</h2>
         <p className="mb-2 text-xs text-muted-foreground">
           PPG vs RPG（バブルサイズ = APG）
         </p>
         <PlayersScatterChart data={scatterData} />
       </section>
 
-      {/* 選手カードグリッド */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+      {/* 選手ロスターリスト（1カラム） */}
+      <div className="space-y-3">
         {players.map((player) => {
           // 該当選手の平均スタッツを検索
           const average = allAverages.find(
             (a) => a.player_id === player.id
           );
           return (
-            <PlayerCard key={player.id} player={player} average={average} />
+            <PlayerRow key={player.id} player={player} average={average} />
           );
         })}
       </div>

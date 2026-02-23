@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Bebas_Neue, Noto_Sans_JP } from "next/font/google";
+import { Plus_Jakarta_Sans, Bebas_Neue, Noto_Sans_JP, Alfa_Slab_One } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { NavigationProgress } from "@/components/layout/NavigationProgress";
+import { PageTransition } from "@/components/layout/PageTransition";
 import { SITE } from "@/lib/constants";
 import "./globals.css";
 
@@ -33,6 +35,16 @@ const notoSansJP = Noto_Sans_JP({
   display: "swap",
 });
 
+/**
+ * Alfa Slab One: ロゴ専用フォント（太く力強いスラブセリフ）
+ */
+const alfaSlabOne = Alfa_Slab_One({
+  variable: "--font-alfa-slab",
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: {
     default: `${SITE.name} - ${SITE.description}`,
@@ -53,13 +65,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
+      {/* Google Material Symbols（アイコンフォント） */}
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body
-        className={`${jakarta.variable} ${bebas.variable} ${notoSansJP.variable} antialiased`}
+        className={`${jakarta.variable} ${bebas.variable} ${notoSansJP.variable} ${alfaSlabOne.variable} antialiased`}
       >
         <div className="flex min-h-screen flex-col">
+          <NavigationProgress />
           <Header />
           <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">
-            {children}
+            <PageTransition>{children}</PageTransition>
           </main>
           <Footer />
         </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import {
   getTeamStats,
+  getStandings,
   getH2HRecords,
   getInjuries,
   getMonthlyRecord,
@@ -23,6 +24,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
+import { Icon } from "@/components/ui/Icon";
+import { GamesAbove500Chart } from "@/components/charts/GamesAbove500Chart";
+import { buildPennantRaceData } from "@/lib/data/pennant-race";
+import { TEAM } from "@/lib/constants";
 import type { Game } from "@/lib/types/database";
 
 export const metadata: Metadata = {
@@ -76,9 +81,10 @@ function buildCumulativeWins(
  */
 export default async function TeamPage() {
   // 全データを並行取得
-  const [teamStats, h2hRecords, injuries, monthlyRecord, quarterTrend, games] =
+  const [teamStats, standings, h2hRecords, injuries, monthlyRecord, quarterTrend, games] =
     await Promise.all([
       getTeamStats(),
+      getStandings(),
       getH2HRecords(),
       getInjuries(),
       getMonthlyRecord(),
@@ -88,6 +94,19 @@ export default async function TeamPage() {
 
   // 累積勝利数データを構築
   const cumulativeWinsData = buildCumulativeWins(games);
+
+  // ペナントレースチャート用データを構築
+  // 横浜EXの試合結果を日付昇順で取得し、勝敗のみの配列にする
+  const exGameResults = [...games]
+    .filter((g) => g.status === "FINAL")
+    .sort((a, b) => a.game_date.localeCompare(b.game_date))
+    .map((g) => isWin(g) === true);
+
+  const pennantRaceData = buildPennantRaceData(
+    standings,
+    exGameResults,
+    TEAM.shortName,
+  );
 
   return (
     <div className="space-y-8">
@@ -105,7 +124,7 @@ export default async function TeamPage() {
        * アクセントカラー付きのカードで視覚的に区別
        * ================================================ */}
       <section>
-        <h2 className="mb-4 text-lg font-semibold">Season Summary</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="analytics" size={20} className="text-primary" />Season Summary</h2>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <SummaryCard
             label="W-L"
@@ -143,12 +162,12 @@ export default async function TeamPage() {
        * 勝敗カード2枚 + ドーナツチャート
        * ================================================ */}
       <section>
-        <h2 className="mb-4 text-lg font-semibold">Home vs Away</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="compare_arrows" size={20} className="text-primary" />Home vs Away</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* ホーム成績カード（薄いグリーングラデーション背景） */}
           <div className="section-gradient rounded-xl border border-border p-6">
             <div className="mb-2 flex items-center gap-2">
-              <span className="inline-block h-3 w-3 rounded-full bg-[#006d3b]" />
+              <Icon name="home" size={16} />
               <h3 className="font-semibold text-foreground">ホーム</h3>
             </div>
             <p className="font-display text-4xl text-[#006d3b]">
@@ -170,7 +189,7 @@ export default async function TeamPage() {
           {/* アウェイ成績カード（白背景にグレーアクセント） */}
           <div className="rounded-xl border border-border bg-card p-6">
             <div className="mb-2 flex items-center gap-2">
-              <span className="inline-block h-3 w-3 rounded-full bg-[#9CA3AF]" />
+              <Icon name="flight" size={16} />
               <h3 className="font-semibold text-foreground">アウェイ</h3>
             </div>
             <p className="font-display text-4xl text-foreground">
@@ -206,7 +225,7 @@ export default async function TeamPage() {
        * 月ごとの勝敗を積み上げ棒グラフで表示
        * ================================================ */}
       <section>
-        <h2 className="mb-4 text-lg font-semibold">月別成績</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="calendar_month" size={20} className="text-primary" />月別成績</h2>
         <TeamMonthlyChart data={monthlyRecord} />
       </section>
 
@@ -215,7 +234,7 @@ export default async function TeamPage() {
        * クォーターごとの平均得点・失点をレーダーチャートで表示
        * ================================================ */}
       <section>
-        <h2 className="mb-4 text-lg font-semibold">Q別得点傾向</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="radar" size={20} className="text-primary" />Q別得点傾向</h2>
         <TeamQuarterRadar data={quarterTrend} />
       </section>
 
@@ -224,17 +243,37 @@ export default async function TeamPage() {
        * 累積勝利数と理想ペース（勝率60%）の比較チャート
        * ================================================ */}
       <section>
-        <h2 className="mb-4 text-lg font-semibold">シーズン推移</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="trending_up" size={20} className="text-primary" />シーズン推移</h2>
         <TeamCumulativeWins data={cumulativeWinsData} />
       </section>
 
       {/* ================================================
-       * セクション6: H2H対戦成績
-       * shadcn Tableで対戦相手ごとの勝敗・平均得点/失点を表示
+       * セクション6: ペナントレース（貯金/借金推移チャート）
+       * 全チームのシーズン推移を折れ線グラフで可視化
+       * ================================================ */}
+      <section>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+          <Icon name="trending_up" size={20} className="text-primary" />
+          B2 ペナントレース
+        </h2>
+        <div className="rounded-xl border border-border bg-card p-6">
+          {pennantRaceData.length > 0 ? (
+            <GamesAbove500Chart teams={pennantRaceData} />
+          ) : (
+            <div className="flex h-48 items-center justify-center text-muted-foreground">
+              データがありません
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ================================================
+       * セクション7: H2H対戦成績
+       * shadcn Table で対戦相手ごとの勝敗・平均得点/失点を表示
        * 勝敗差の大きい順にソート済み
        * ================================================ */}
       <section>
-        <h2 className="mb-4 text-lg font-semibold">H2H 対戦成績</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="swap_horiz" size={20} className="text-primary" />H2H 対戦成績</h2>
         <div className="rounded-xl border border-border bg-card">
           <Table>
             <TableHeader>
@@ -276,11 +315,11 @@ export default async function TeamPage() {
       </section>
 
       {/* ================================================
-       * セクション7: インジュアリーリスト
+       * セクション8: インジュアリーリスト
        * ケガで離脱中の選手を一覧表示
        * ================================================ */}
       <section>
-        <h2 className="mb-4 text-lg font-semibold">Injury List</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="healing" size={20} className="text-primary" />Injury List</h2>
         {injuries.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-6 text-center text-muted-foreground">
             <p>現在ケガ人はいません</p>

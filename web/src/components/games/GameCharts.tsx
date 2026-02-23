@@ -10,6 +10,7 @@
 
 import { QuarterChart } from "@/components/charts/QuarterChart";
 import { ScoreFlowChart } from "@/components/charts/ScoreFlowChart";
+import type { PlayByPlayPoint } from "@/components/charts/ScoreFlowChart";
 
 // ================================================
 // 型定義
@@ -20,13 +21,6 @@ type QuarterData = {
   quarter: string;
   home: number;
   away: number;
-};
-
-/** ScoreFlowChart 用の累積スコアデータ */
-type ScoreFlowData = {
-  label: string;
-  homeTotal: number;
-  awayTotal: number;
 };
 
 // ================================================
@@ -59,9 +53,11 @@ export function GameQuarterChart({
 }
 
 /**
- * スコアフローチャート（累積スコア推移、use client ラッパー）
+ * Play-by-Play スコアフローチャート（use client ラッパー）
  *
- * @param data - Q1〜FINALの累積スコアデータ
+ * 得点毎のスコア推移をステップチャートで表示する。
+ *
+ * @param data - 得点イベントごとの累積スコアデータ
  * @param homeTeamName - ホームチーム名
  * @param awayTeamName - アウェイチーム名
  */
@@ -70,7 +66,7 @@ export function GameScoreFlowChart({
   homeTeamName,
   awayTeamName,
 }: {
-  data: ScoreFlowData[];
+  data: PlayByPlayPoint[];
   homeTeamName: string;
   awayTeamName: string;
 }) {

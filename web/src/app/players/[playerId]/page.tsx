@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPlayerById, getPlayerAverage, getPlayerGameLog } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
+import { Icon } from "@/components/ui/Icon";
 import { Separator } from "@/components/ui/separator";
 import {
   PlayerAbilityRadar,
   PlayerGameLogChart,
 } from "@/components/players/PlayerCharts";
+import { PlayerAvatar } from "@/components/players/PlayerAvatar";
 
 /** ページProps型（Next.js 16のPromise params） */
 type Props = {
@@ -125,13 +127,10 @@ export default async function PlayerDetailPage({ params }: Props) {
           #{player.number ?? ""}
         </div>
 
-        <div className="flex items-start gap-6 relative">
-          {/* 背番号（大きなフォント） */}
-          <div className="shrink-0">
-            <span className="font-display text-7xl leading-none text-[#006d3b]">
-              #{player.number ?? "-"}
-            </span>
-          </div>
+        <div className="flex items-start gap-5 relative sm:gap-6">
+          {/* 選手アバター画像 */}
+          <PlayerAvatar player={player} size="xl" />
+
 
           {/* 選手基本情報 */}
           <div className="min-w-0 flex-1">
@@ -190,7 +189,7 @@ export default async function PlayerDetailPage({ params }: Props) {
            * アクセントカラーとフェードインアニメーション付き
            * ================================================ */}
           <section>
-            <h2 className="mb-4 text-lg font-semibold">Season Average</h2>
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="star" size={20} className="text-primary" />Season Average</h2>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <SeasonAverageCard
                 label="PPG"
@@ -229,11 +228,11 @@ export default async function PlayerDetailPage({ params }: Props) {
            * ================================================ */}
           <section className="grid gap-4 md:grid-cols-2">
             <div className="rounded-xl border border-border bg-card p-6">
-              <h2 className="mb-4 text-lg font-semibold">選手能力</h2>
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="radar" size={20} className="text-primary" />選手能力</h2>
               <PlayerAbilityRadar data={radarData} />
             </div>
             <div className="rounded-xl border border-border bg-card p-6">
-              <h2 className="mb-4 text-lg font-semibold">直近試合の得点推移</h2>
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="show_chart" size={20} className="text-primary" />直近試合の得点推移</h2>
               {gameLogData.length > 0 ? (
                 <PlayerGameLogChart data={gameLogData} averagePts={average.ppg} />
               ) : (
@@ -249,7 +248,7 @@ export default async function PlayerDetailPage({ params }: Props) {
            * FG%, 3P%, FT%を水平プログレスバーで表示
            * ================================================ */}
           <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="mb-4 text-lg font-semibold">Shooting Split</h2>
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="gps_fixed" size={20} className="text-primary" />Shooting Split</h2>
             <div className="space-y-4">
               <ShootingBar label="FG%" value={average.fg_pct} />
               <ShootingBar label="3P%" value={average.tp_pct} />
@@ -262,7 +261,7 @@ export default async function PlayerDetailPage({ params }: Props) {
            * 試合数、MPG、SPG、BPG、TOPG、EFFを一覧表示
            * ================================================ */}
           <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="mb-4 text-lg font-semibold">Stats Summary</h2>
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="analytics" size={20} className="text-primary" />Stats Summary</h2>
             <Separator className="mb-4" />
             <div className="grid grid-cols-3 gap-4 md:grid-cols-6">
               <StatsSummaryItem label="試合数" value={String(average.games_played)} />
