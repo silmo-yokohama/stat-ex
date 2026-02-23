@@ -23,7 +23,7 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       - name: リポジトリをチェックアウト
@@ -46,6 +46,8 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           # スケジュール実行時はtrue、手動実行時は入力値に従う
           ENABLE_AI_COMMENT: ${{ github.event_name == 'schedule' && 'true' || inputs.enable_ai_comment }}
+          # Python出力バッファを無効化してリアルタイムログ表示
+          PYTHONUNBUFFERED: "1"
         # scraper/ をカレントディレクトリにして -m で実行
         # → sys.path に scraper/ が追加され、from src.xxx の import が解決される
         run: cd scraper && python -m src.main
