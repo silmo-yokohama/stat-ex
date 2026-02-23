@@ -10,7 +10,7 @@ import sys
 import traceback
 from datetime import datetime, timezone, timedelta
 
-from supabase import createclient, Client
+from supabase import create_client, Client
 
 from src.sources.bleague import (
     fetch_schedule,
@@ -134,7 +134,7 @@ def _create_supabaseclient() -> Client:
     if not url or not key:
         raise ValueError("SUPABASE_URL と SUPABASE_SERVICE_ROLE_KEY を設定してください")
 
-    return createclient(url, key)
+    return create_client(url, key)
 
 
 # ================================================
