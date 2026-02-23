@@ -33,7 +33,8 @@ def fetch_schedule(
     """
     試合スケジュール（結果 + 予定）を取得する
 
-    JSON APIからページネーションしながら全試合を取得する。
+    B.LEAGUE公式サイトのJSON APIはHTMLフラグメントを返す。
+    topics配列からHTMLをパースして試合データを抽出する。
 
     Args:
         fb: フィルタ（"1"=日程のみ, "2"=結果のみ, ""=全て）
@@ -48,67 +49,144 @@ def fetch_schedule(
     errors: list[dict] = []
 
     while True:
+        # tab=2 が B2タブの指定（必須）
         url = (
             f"{BASE_URL}/schedule/?data_format=json"
             f"&year={CURRENT_SEASON_YEAR}"
             f"&event={B2_EVENT_ID}"
             f"&club={TEAM_ID}"
+            f"&tab=2"
             f"&fb={fb}&ha={ha}&mon={month}"
             f"&index={index}"
         )
 
         try:
-            response = get(url)
+            response = get(url, timeout=30)
             data = response.json()
         except Exception as e:
             errors.append({"source": "schedule", "message": str(e), "index": index})
             break
 
-        # JSON APIのレスポンスから試合データを抽出
-        schedule_list = data.get("data", data.get("schedule", []))
+        # topics配列にHTMLフラグメントが格納されている
+        topics = data.get("topics", [])
 
-        if not schedule_list:
+        if not topics:
             break
 
-        for item in schedule_list:
-            game = _parse_schedule_item(item)
+        for topic_html in topics:
+            game = _parse_schedule_html(topic_html)
             if game:
                 games.append(game)
 
-        # 20件未満なら最終ページ
-        if len(schedule_list) < 20:
+        # index が null ならば最終ページ
+        next_index = data.get("index")
+        if not next_index:
             break
 
-        index += 20
+        index = next_index
 
     return {"games": games, "total": len(games), "errors": errors}
 
 
-def _parse_schedule_item(item: dict) -> dict | None:
-    """スケジュールAPIレスポンスの1件を試合データにパースする"""
+def _parse_schedule_html(html: str) -> dict | None:
+    """
+    スケジュールAPIのHTMLフラグメント1件を試合データにパースする
+
+    HTMLフラグメント構造:
+      <li class="list-item" id="{ScheduleKey}">
+        <span class="team home"> / <span class="team away">
+        <span class="number home-score"><span>{score}</span></span>
+        <div class="info-arena"><span>{節}</span><span>{会場}</span><span>{時刻}</span></div>
+        <div class="info-scorestate"><span>FINAL</span></div>
+    """
     try:
-        schedule_key = item.get("ScheduleKey", "")
+        soup = BeautifulSoup(html, "html.parser")
+
+        # ScheduleKey: <li id="505511"> から取得
+        li = soup.find("li", class_="list-item")
+        if not li:
+            return None
+        schedule_key = li.get("id", "")
         if not schedule_key:
             return None
 
-        # 横浜EXがHOMEかAWAYかを判定
-        home_team_id = item.get("HomeTeamID", "")
-        is_home = str(home_team_id) == str(TEAM_ID)
+        # 日付: <span class="title">2025.10.05(日)</span> から取得
+        date_span = soup.find("span", class_="title")
+        game_date = ""
+        if date_span:
+            date_text = date_span.get_text(strip=True)
+            # "2025.10.05(日)" → "2025-10-05"
+            date_match = re.match(r"(\d{4})\.(\d{2})\.(\d{2})", date_text)
+            if date_match:
+                game_date = f"{date_match.group(1)}-{date_match.group(2)}-{date_match.group(3)}"
+
+        # チーム名: <span class="team home"> / <span class="team away">
+        home_team_el = soup.find("span", class_=lambda c: c and "team" in c and "home" in c)
+        away_team_el = soup.find("span", class_=lambda c: c and "team" in c and "away" in c)
+        home_team_name = ""
+        away_team_name = ""
+        if home_team_el:
+            name_el = home_team_el.find("span", class_="team-name")
+            home_team_name = name_el.get_text(strip=True) if name_el else ""
+        if away_team_el:
+            name_el = away_team_el.find("span", class_="team-name")
+            away_team_name = name_el.get_text(strip=True) if name_el else ""
+
+        # 横浜EXがHOMEかAWAYかを判定（"横浜EX" を含むチーム名で判定）
+        ex_names = ["横浜EX", "横浜エクセレンス"]
+        is_home = any(n in home_team_name for n in ex_names)
+
+        # スコア: <span class="number home-score"><span>{score}</span></span>
+        score_home = None
+        score_away = None
+        home_score_el = soup.find("span", class_=lambda c: c and "home-score" in c)
+        away_score_el = soup.find("span", class_=lambda c: c and "away-score" in c)
+        if home_score_el:
+            score_span = home_score_el.find("span")
+            if score_span:
+                score_home = _safe_int(score_span.get_text(strip=True))
+        if away_score_el:
+            score_span = away_score_el.find("span")
+            if score_span:
+                score_away = _safe_int(score_span.get_text(strip=True))
+
+        # 試合時刻・会場: <div class="info-arena"><span>第1節</span><span>場所</span><span>13:35</span>
+        game_time = ""
+        venue = ""
+        section = ""
+        info_arena = soup.find("div", class_="info-arena")
+        if info_arena:
+            spans = info_arena.find_all("span")
+            if len(spans) >= 1:
+                section = spans[0].get_text(strip=True)
+            if len(spans) >= 2:
+                venue = spans[1].get_text(strip=True)
+            if len(spans) >= 3:
+                game_time = spans[2].get_text(strip=True)
+
+        # ステータス: <div class="info-scorestate"><span>FINAL</span>
+        status = "SCHEDULED"
+        scorestate = soup.find("div", class_="info-scorestate")
+        if scorestate:
+            state_text = scorestate.get_text(strip=True)
+            if "FINAL" in state_text:
+                status = "FINAL"
 
         return {
             "schedule_key": schedule_key,
-            "game_date": item.get("GameDate", ""),
-            "game_time": item.get("GameTime", ""),
+            "game_date": game_date,
+            "game_time": game_time,
             "home_away": "HOME" if is_home else "AWAY",
-            "home_team_name": item.get("HomeTeamName", ""),
-            "away_team_name": item.get("AwayTeamName", ""),
-            "home_team_id": home_team_id,
-            "away_team_id": item.get("AwayTeamID", ""),
-            "score_home": _safe_int(item.get("HomeTeamScore")),
-            "score_away": _safe_int(item.get("AwayTeamScore")),
-            "venue": item.get("Arena", ""),
-            "section": item.get("SectionName", ""),
-            "status": _determine_status(item),
+            "home_team_name": home_team_name,
+            "away_team_name": away_team_name,
+            # HTMLにはteam IDがないため、チーム名でマッチングする
+            "home_team_id": None,
+            "away_team_id": None,
+            "score_home": score_home,
+            "score_away": score_away,
+            "venue": venue,
+            "section": section,
+            "status": status,
         }
     except Exception:
         return None
@@ -258,6 +336,7 @@ def fetch_standings() -> dict:
     B2順位表を取得する
 
     SSR HTMLをパースしてB2全チームの順位・勝敗データを抽出する。
+    B2は複数カンファレンスに分かれているため、全テーブルをパースする。
 
     Returns:
         順位表データ
@@ -266,7 +345,7 @@ def fetch_standings() -> dict:
     errors: list[dict] = []
 
     try:
-        response = get(url)
+        response = get(url, timeout=30)
         html = response.text
     except Exception as e:
         return {"error": str(e), "standings": []}
@@ -274,51 +353,59 @@ def fetch_standings() -> dict:
     soup = BeautifulSoup(html, "html.parser")
     standings: list[dict] = []
 
-    # 順位表テーブルを探す
-    table = soup.find("table", class_=re.compile(r"standings|ranking"))
-    if not table:
-        # テーブルクラス名が不明な場合は全テーブルを探索
-        tables = soup.find_all("table")
-        for t in tables:
-            headers = t.find_all("th")
-            header_texts = [h.get_text(strip=True) for h in headers]
-            if "勝" in header_texts and "負" in header_texts:
-                table = t
-                break
+    # 全テーブルから順位表を探す（B2は複数カンファレンスに分かれている）
+    tables = soup.find_all("table")
+    standings_tables = []
+    for t in tables:
+        headers = t.find_all("th")
+        header_texts = [h.get_text(strip=True) for h in headers]
+        if "勝" in header_texts and "負" in header_texts:
+            standings_tables.append(t)
 
-    if not table:
+    if not standings_tables:
         errors.append({"source": "standings", "message": "順位表テーブルが見つかりません"})
         return {"standings": [], "errors": errors}
 
-    rows = table.find_all("tr")[1:]  # ヘッダー行をスキップ
+    # 重複排除用（複数テーブルに同じチームが出る場合、最初の出現を優先）
+    seen_team_ids: set[int] = set()
 
-    for row in rows:
-        cells = row.find_all(["td", "th"])
-        if len(cells) < 5:
-            continue
+    # 全テーブルの行をパースする
+    for table in standings_tables:
+        rows = table.find_all("tr")[1:]  # ヘッダー行をスキップ
 
-        try:
-            # チーム名からリンクを取得してTeamIDを抽出
-            team_link = row.find("a", href=re.compile(r"TeamID="))
-            team_id = None
-            if team_link:
-                team_id_match = re.search(r"TeamID=(\d+)", team_link.get("href", ""))
-                if team_id_match:
-                    team_id = int(team_id_match.group(1))
+        for row in rows:
+            cells = row.find_all(["td", "th"])
+            if len(cells) < 5:
+                continue
 
-            cell_texts = [c.get_text(strip=True) for c in cells]
+            try:
+                # チーム名からリンクを取得してTeamIDを抽出
+                team_link = row.find("a", href=re.compile(r"TeamID="))
+                team_id = None
+                if team_link:
+                    team_id_match = re.search(r"TeamID=(\d+)", team_link.get("href", ""))
+                    if team_id_match:
+                        team_id = int(team_id_match.group(1))
 
-            standings.append({
-                "rank": _safe_int(cell_texts[0]) if cell_texts[0].isdigit() else None,
-                "team_name": cell_texts[1] if len(cell_texts) > 1 else "",
-                "team_id": team_id,
-                "wins": _safe_int(cell_texts[2]) if len(cell_texts) > 2 else 0,
-                "losses": _safe_int(cell_texts[3]) if len(cell_texts) > 3 else 0,
-                "win_pct": _safe_float(cell_texts[4]) if len(cell_texts) > 4 else None,
-                "games_behind": _safe_float(cell_texts[5]) if len(cell_texts) > 5 else None,
-            })
-        except Exception as e:
-            errors.append({"source": "standings.row", "message": str(e)})
+                cell_texts = [c.get_text(strip=True) for c in cells]
+
+                # 重複チーム（複数テーブルに出現）をスキップ
+                if team_id and team_id in seen_team_ids:
+                    continue
+                if team_id:
+                    seen_team_ids.add(team_id)
+
+                standings.append({
+                    "rank": _safe_int(cell_texts[0]) if cell_texts[0].isdigit() else None,
+                    "team_name": cell_texts[1] if len(cell_texts) > 1 else "",
+                    "team_id": team_id,
+                    "wins": _safe_int(cell_texts[2]) if len(cell_texts) > 2 else 0,
+                    "losses": _safe_int(cell_texts[3]) if len(cell_texts) > 3 else 0,
+                    "win_pct": _safe_float(cell_texts[4]) if len(cell_texts) > 4 else None,
+                    "games_behind": _safe_float(cell_texts[5]) if len(cell_texts) > 5 else None,
+                })
+            except Exception as e:
+                errors.append({"source": "standings.row", "message": str(e)})
 
     return {"standings": standings, "total": len(standings), "errors": errors}
 
@@ -513,18 +600,3 @@ def _safe_float(value: object) -> float | None:
         return None
 
 
-def _determine_status(item: dict) -> str:
-    """試合ステータスを判定する"""
-    score_home = item.get("HomeTeamScore")
-    score_away = item.get("AwayTeamScore")
-
-    # スコアがあれば終了済み
-    if score_home is not None and score_away is not None:
-        try:
-            int(score_home)
-            int(score_away)
-            return "FINAL"
-        except (ValueError, TypeError):
-            pass
-
-    return "SCHEDULED"

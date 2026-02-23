@@ -25,6 +25,19 @@ def fetch_head_to_head() -> dict:
     スポナビのheadtohead widgetをパースし、
     全対戦相手との勝敗数・平均得点・失点を取得する。
 
+    HTML構造（2025-26シーズン時点）:
+      <td class="ba-table__data">
+        <dl>
+          <dt class="ba-table__team">
+            <a href="...teams/{id}/info">
+              <p class="ba-table__name">vs. {チーム名}</p>
+            </a>
+          </dt>
+          <dd class="ba-table__detail">{N}戦{W}勝{L}敗</dd>
+          <dd class="ba-table__detail">平均{PF}得点{PA}失点</dd>
+        </dl>
+      </td>
+
     Returns:
         対戦相手別の勝敗数・平均得点・失点
     """
@@ -40,44 +53,69 @@ def fetch_head_to_head() -> dict:
     soup = BeautifulSoup(html, "html.parser")
     records: list[dict] = []
 
-    # テーブルから対戦成績を抽出
-    table = soup.find("table")
-    if not table:
-        errors.append({"source": "h2h", "message": "H2Hテーブルが見つかりません"})
+    # 「ホーム＆アウェイ」タブ（最初のタブ）のテーブルを取得
+    tab_dom = soup.find("div", id="js-tabDom01")
+    if not tab_dom:
+        # フォールバック: 最初のテーブルを使う
+        tab_dom = soup
+
+    # 各対戦相手はtd.ba-table__dataに格納されている
+    cells = tab_dom.find_all("td", class_="ba-table__data")
+
+    if not cells:
+        errors.append({"source": "h2h", "message": "H2Hデータが見つかりません"})
         return {"records": [], "errors": errors}
 
-    rows = table.find_all("tr")[1:]  # ヘッダー行をスキップ
-
-    for row in rows:
-        cells = row.find_all("td")
-        if len(cells) < 4:
-            continue
-
+    for cell in cells:
         try:
-            # チーム名を取得
-            team_cell = cells[0]
-            team_name = team_cell.get_text(strip=True)
+            dl = cell.find("dl")
+            if not dl:
+                continue
 
-            # チームリンクからIDを取得
-            team_link = team_cell.find("a")
+            # チーム名: <p class="ba-table__name">vs. 青森</p>
+            name_el = dl.find("p", class_="ba-table__name")
+            team_name = name_el.get_text(strip=True) if name_el else ""
+            # "vs. 青森" → "青森"
+            team_name = re.sub(r"^vs\.\s*", "", team_name)
+
+            # チームID: <a href="...teams/{id}/info"> から抽出
+            team_link = dl.find("a")
             opponent_id = None
             if team_link:
                 id_match = re.search(r"/teams/(\d+)/", team_link.get("href", ""))
                 if id_match:
                     opponent_id = int(id_match.group(1))
 
-            cell_texts = [c.get_text(strip=True) for c in cells]
+            # 戦績・平均得失点: <dd class="ba-table__detail"> から抽出
+            details = dl.find_all("dd", class_="ba-table__detail")
+            wins = 0
+            losses = 0
+            avg_points_for = None
+            avg_points_against = None
+
+            for dd in details:
+                text = dd.get_text(strip=True)
+                # "4戦3勝1敗" パターン
+                record_match = re.search(r"(\d+)勝(\d+)敗", text)
+                if record_match:
+                    wins = int(record_match.group(1))
+                    losses = int(record_match.group(2))
+                # "平均88得点78失点" パターン
+                pts_match = re.search(r"平均(\d+)得点(\d+)失点", text)
+                if pts_match:
+                    avg_points_for = float(pts_match.group(1))
+                    avg_points_against = float(pts_match.group(2))
 
             records.append({
                 "opponent_name": team_name,
                 "opponent_id": opponent_id,
-                "wins": _safe_int(cell_texts[1]) if len(cell_texts) > 1 else 0,
-                "losses": _safe_int(cell_texts[2]) if len(cell_texts) > 2 else 0,
-                "avg_points_for": _safe_float(cell_texts[3]) if len(cell_texts) > 3 else None,
-                "avg_points_against": _safe_float(cell_texts[4]) if len(cell_texts) > 4 else None,
+                "wins": wins,
+                "losses": losses,
+                "avg_points_for": avg_points_for,
+                "avg_points_against": avg_points_against,
             })
         except Exception as e:
-            errors.append({"source": "h2h.row", "message": str(e)})
+            errors.append({"source": "h2h.cell", "message": str(e)})
 
     return {"records": records, "total": len(records), "errors": errors}
 

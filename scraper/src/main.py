@@ -443,12 +443,22 @@ def _upsert_games(client: Client, cache: LookupCache, data: dict) -> list[str]:
 
         # 対戦相手のチームUUIDを取得
         # home_away に応じて、相手チームのIDを決定
+        opp_uuid = None
         if g.get("home_away") == "HOME":
             opp_bleague_id = g.get("away_team_id")
+            opp_name = g.get("away_team_name", "")
         else:
             opp_bleague_id = g.get("home_team_id")
+            opp_name = g.get("home_team_name", "")
 
-        opp_uuid = cache.get_team_uuid(_safe_int_val(opp_bleague_id))
+        # bleague_team_id でのルックアップを試行
+        if opp_bleague_id is not None:
+            opp_uuid = cache.get_team_uuid(_safe_int_val(opp_bleague_id))
+
+        # IDが取れない場合はチーム名でフォールバック検索
+        if not opp_uuid and opp_name:
+            opp_uuid = cache.get_team_uuid_by_name(opp_name)
+
         if not opp_uuid:
             output_error(
                 f"対戦相手チーム不明: {g.get('home_team_name')} vs {g.get('away_team_name')}",
