@@ -45,12 +45,37 @@ const alfaSlabOne = Alfa_Slab_One({
   display: "swap",
 });
 
+/**
+ * サイト全体のメタデータ
+ *
+ * SEO・OGP・Twitter Card・ファビコン等の設定を一括管理する。
+ * 各ページの固有メタデータは各 page.tsx の `metadata` エクスポートで上書きされる。
+ */
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://stat-ex.vercel.app",
+  ),
   title: {
     default: `${SITE.name} - ${SITE.description}`,
     template: `%s | ${SITE.name}`,
   },
   description: `${SITE.concept}。横浜エクセレンス（B.LEAGUE B2）の試合結果・選手スタッツ・チーム成績を一箇所に集約。`,
+  openGraph: {
+    type: "website",
+    locale: "ja_JP",
+    siteName: SITE.name,
+    title: `${SITE.name} - ${SITE.description}`,
+    description: `${SITE.concept}。横浜エクセレンス（B.LEAGUE B2）の試合結果・選手スタッツ・チーム成績を一箇所に集約。`,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE.name} - ${SITE.description}`,
+    description: `${SITE.concept}。横浜エクセレンスの全試合・全選手スタッツを一箇所に。`,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 /**
