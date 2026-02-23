@@ -1,11 +1,11 @@
 /**
  * コンテンツデータ取得関数（ニュース・動画・マスコット）
  *
- * 現在はモックデータを返す。Supabase接続後はDBクエリに置き換える。
+ * Supabase から Server Components 経由でデータを取得する。
  */
 
+import { createClient } from "@/lib/supabase/server";
 import type { News, Video, Mascot, NewsSource } from "@/lib/types/database";
-import { mockNews, mockVideos, mockMascot } from "@/lib/mock-data";
 
 // ================================================
 // コンテンツ取得関数
@@ -21,16 +21,22 @@ export async function getNews(
   source?: NewsSource,
   limit: number = 10
 ): Promise<News[]> {
-  let news = [...mockNews];
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("news")
+    .select("*")
+    .order("published_at", { ascending: false })
+    .limit(limit);
 
   if (source) {
-    news = news.filter((n) => n.source === source);
+    query = query.eq("source", source);
   }
 
-  // 公開日時の新しい順
-  news.sort((a, b) => b.published_at.localeCompare(a.published_at));
+  const { data, error } = await query;
 
-  return news.slice(0, limit);
+  if (error || !data) return [];
+  return data as unknown as News[];
 }
 
 /**
@@ -39,14 +45,30 @@ export async function getNews(
  * @param limit 取得件数（デフォルト10）
  */
 export async function getVideos(limit: number = 10): Promise<Video[]> {
-  return [...mockVideos]
-    .sort((a, b) => b.published_at.localeCompare(a.published_at))
-    .slice(0, limit);
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("videos")
+    .select("*")
+    .order("published_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+  return data as unknown as Video[];
 }
 
 /**
  * マスコット情報を取得する
  */
-export async function getMascot(): Promise<Mascot> {
-  return mockMascot;
+export async function getMascot(): Promise<Mascot | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("mascot")
+    .select("*")
+    .limit(1)
+    .single();
+
+  if (error || !data) return null;
+  return data as unknown as Mascot;
 }

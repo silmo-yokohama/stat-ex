@@ -3,14 +3,13 @@
 -- 横浜エクセレンス 情報ダッシュボード
 -- ================================================
 
--- UUID生成用拡張
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- PostgreSQL 13+ 標準の gen_random_uuid() を使用（uuid-ossp 拡張は不要）
 
 -- ================================================
 -- シーズンマスタ
 -- ================================================
 CREATE TABLE seasons (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   year INTEGER NOT NULL UNIQUE,           -- シーズン開始年（例: 2025 = 2025-26シーズン）
   name TEXT NOT NULL,                     -- 表示名（例: "2025-26"）
   start_date DATE,
@@ -23,7 +22,7 @@ CREATE TABLE seasons (
 -- B2全チーム
 -- ================================================
 CREATE TABLE teams (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   bleague_team_id INTEGER NOT NULL UNIQUE,  -- B.LEAGUE公式のTeamID
   name TEXT NOT NULL,                       -- チーム名（例: "横浜エクセレンス"）
   short_name TEXT NOT NULL,                 -- 略称（例: "横浜EX"）
@@ -37,7 +36,7 @@ CREATE TABLE teams (
 -- 選手マスタ
 -- ================================================
 CREATE TABLE players (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   bleague_player_id TEXT NOT NULL UNIQUE,     -- B.LEAGUE公式のPlayerID
   sportsnavi_player_id TEXT,                  -- スポナビのPlayerID（マッピング用）
   name TEXT NOT NULL,                         -- 選手名
@@ -58,7 +57,7 @@ CREATE TABLE players (
 -- 移籍した選手もデータを永続保持するための中間テーブル
 -- ================================================
 CREATE TABLE player_seasons (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
   season_id UUID NOT NULL REFERENCES seasons(id) ON DELETE CASCADE,
   is_active BOOLEAN NOT NULL DEFAULT true,   -- 現在ロスターに在籍中か
@@ -73,7 +72,7 @@ CREATE TABLE player_seasons (
 -- 試合データ
 -- ================================================
 CREATE TABLE games (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   schedule_key TEXT NOT NULL UNIQUE,          -- B.LEAGUE公式のScheduleKey（ルーティング用）
   season_id UUID NOT NULL REFERENCES seasons(id) ON DELETE CASCADE,
   game_date DATE NOT NULL,                    -- 試合日
@@ -108,7 +107,7 @@ CREATE TABLE games (
 -- 1試合の全選手スタッツ（両チーム）
 -- ================================================
 CREATE TABLE box_scores (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
   player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
   team_side TEXT NOT NULL CHECK (team_side IN ('home', 'away')),
@@ -149,7 +148,7 @@ CREATE TABLE box_scores (
 -- チーム成績（シーズン単位）
 -- ================================================
 CREATE TABLE team_stats (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   season_id UUID NOT NULL REFERENCES seasons(id) ON DELETE CASCADE,
   wins INTEGER NOT NULL DEFAULT 0,
   losses INTEGER NOT NULL DEFAULT 0,
@@ -170,7 +169,7 @@ CREATE TABLE team_stats (
 -- B2順位表
 -- ================================================
 CREATE TABLE standings (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   season_id UUID NOT NULL REFERENCES seasons(id) ON DELETE CASCADE,
   team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
   rank INTEGER NOT NULL,
@@ -192,7 +191,7 @@ CREATE TABLE standings (
 -- 対戦成績（H2H）
 -- ================================================
 CREATE TABLE h2h_records (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   season_id UUID NOT NULL REFERENCES seasons(id) ON DELETE CASCADE,
   opponent_team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
   wins INTEGER NOT NULL DEFAULT 0,
@@ -208,7 +207,7 @@ CREATE TABLE h2h_records (
 -- インジュアリーリスト
 -- ================================================
 CREATE TABLE injuries (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   player_id UUID NOT NULL REFERENCES players(id) ON DELETE CASCADE,
   reason TEXT NOT NULL,                       -- 公示事由
   registered_date DATE NOT NULL,              -- 登録日
@@ -220,7 +219,7 @@ CREATE TABLE injuries (
 -- ニュース記事
 -- ================================================
 CREATE TABLE news (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   source TEXT NOT NULL CHECK (source IN ('official', 'media')),  -- official=公式HP, media=Google News
   title TEXT NOT NULL,
   url TEXT NOT NULL UNIQUE,
@@ -235,7 +234,7 @@ CREATE TABLE news (
 -- YouTube動画
 -- ================================================
 CREATE TABLE videos (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   video_id TEXT NOT NULL UNIQUE,              -- YouTubeのvideoId
   title TEXT NOT NULL,
   published_at TIMESTAMPTZ NOT NULL,
@@ -249,7 +248,7 @@ CREATE TABLE videos (
 -- AI試合寸評
 -- ================================================
 CREATE TABLE game_comments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   game_id UUID NOT NULL UNIQUE REFERENCES games(id) ON DELETE CASCADE,  -- 1試合1寸評
   content TEXT NOT NULL,                      -- 寸評テキスト（200〜300字）
   model TEXT NOT NULL DEFAULT 'gemini-2.0-flash',  -- 使用したAIモデル
@@ -262,7 +261,7 @@ CREATE TABLE game_comments (
 -- マスコット情報
 -- ================================================
 CREATE TABLE mascot (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   profile_json JSONB,                         -- プロフィール情報（柔軟なJSON）
   images_json JSONB,                          -- 画像URLリスト

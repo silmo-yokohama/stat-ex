@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { PageTransition } from "@/components/layout/PageTransition";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { SITE } from "@/lib/constants";
 import "./globals.css";
 
@@ -100,6 +101,7 @@ export default function RootLayout({
       <body
         className={`${jakarta.variable} ${bebas.variable} ${notoSansJP.variable} ${alfaSlabOne.variable} antialiased`}
       >
+        <GoogleAnalytics />
         <div className="flex min-h-screen flex-col">
           <NavigationProgress />
           <Header />

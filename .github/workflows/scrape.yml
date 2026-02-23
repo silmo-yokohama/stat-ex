@@ -12,7 +12,13 @@ on:
     # 毎日22:00 JST = 13:00 UTC
     - cron: "0 13 * * *"
   workflow_dispatch:
-    # 手動実行も可能
+    # 手動実行も可能（AI寸評のON/OFF切替付き）
+    inputs:
+      enable_ai_comment:
+        description: "AI寸評を生成するか（初回バッチ時はfalse推奨）"
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   scrape:
@@ -38,4 +44,6 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # スケジュール実行時はtrue、手動実行時は入力値に従う
+          ENABLE_AI_COMMENT: ${{ github.event_name == 'schedule' && 'true' || inputs.enable_ai_comment }}
         run: python scraper/src/main.py

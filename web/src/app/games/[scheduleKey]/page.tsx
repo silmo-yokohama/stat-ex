@@ -21,6 +21,7 @@ import {
   GameQuarterChart,
   GameScoreFlowChart,
 } from "@/components/games/GameCharts";
+import { LiveScoreboard } from "@/components/games/LiveScoreboard";
 
 /**
  * P3: 試合詳細ページ
@@ -682,6 +683,9 @@ export default async function GameDetailPage({ params }: Props) {
   const quarterChartData = buildQuarterChartData(game);
   const scoreFlowData = buildPlayByPlayData(game);
 
+  // ライブモード判定
+  const isLive = game.status === "LIVE";
+
   return (
     <div className="space-y-6">
       {/* 戻るリンク */}
@@ -693,44 +697,63 @@ export default async function GameDetailPage({ params }: Props) {
         試合一覧に戻る
       </Link>
 
-      {/* セクション1: スコアボードヘッダー */}
-      <Scoreboard game={game} homeName={homeName} awayName={awayName} />
+      {isLive ? (
+        /* ========================================
+         * ライブモード: クライアントコンポーネントで
+         * 30秒間隔自動更新するスコアボード＋ボックススコア
+         * ======================================== */
+        <LiveScoreboard
+          scheduleKey={game.schedule_key}
+          homeName={homeName}
+          awayName={awayName}
+          isExHome={game.home_away === "HOME"}
+        />
+      ) : (
+        /* ========================================
+         * 通常モード: Server Component で描画した
+         * 確定データ（FINAL / SCHEDULED）
+         * ======================================== */
+        <>
+          {/* セクション1: スコアボードヘッダー */}
+          <Scoreboard game={game} homeName={homeName} awayName={awayName} />
 
-      {/* セクション2: Q別スコア分析チャート（2列グリッド） */}
-      {game.q1_home !== null && (
-        <section className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-              <Icon name="bar_chart" size={20} className="text-primary" />
-              Q別得点比較
-            </h2>
-            <GameQuarterChart
-              data={quarterChartData}
-              homeTeamName={homeName}
-              awayTeamName={awayName}
-            />
-          </div>
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-              <Icon name="show_chart" size={20} className="text-primary" />
-              スコア推移
-            </h2>
-            <GameScoreFlowChart
-              data={scoreFlowData}
-              homeTeamName={homeName}
-              awayTeamName={awayName}
-            />
-          </div>
-        </section>
+          {/* セクション2: Q別スコア分析チャート（2列グリッド） */}
+          {game.q1_home !== null && (
+            <section className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-xl border border-border bg-card p-6">
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+                  <Icon name="bar_chart" size={20} className="text-primary" />
+                  Q別得点比較
+                </h2>
+                <GameQuarterChart
+                  data={quarterChartData}
+                  homeTeamName={homeName}
+                  awayTeamName={awayName}
+                />
+              </div>
+              <div className="rounded-xl border border-border bg-card p-6">
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+                  <Icon name="show_chart" size={20} className="text-primary" />
+                  スコア推移
+                </h2>
+                <GameScoreFlowChart
+                  data={scoreFlowData}
+                  homeTeamName={homeName}
+                  awayTeamName={awayName}
+                />
+              </div>
+            </section>
+          )}
+
+          {/* セクション3: ボックススコアテーブル */}
+          <BoxScoreTable boxScores={game.box_scores} />
+
+          {/* セクション4: AI試合寸評 */}
+          {game.comment && <AICommentary content={game.comment.content} />}
+        </>
       )}
 
-      {/* セクション3: ボックススコアテーブル */}
-      <BoxScoreTable boxScores={game.box_scores} />
-
-      {/* セクション4: AI試合寸評 */}
-      {game.comment && <AICommentary content={game.comment.content} />}
-
-      {/* セクション5: 試合情報 */}
+      {/* セクション5: 試合情報（ライブ・通常共通） */}
       <GameInfo game={game} />
     </div>
   );

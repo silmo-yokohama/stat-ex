@@ -62,3 +62,4 @@ supabase/.temp/
 *.log
 npm-debug.log*
 pnpm-debug.log*
+web/supabase/.temp/

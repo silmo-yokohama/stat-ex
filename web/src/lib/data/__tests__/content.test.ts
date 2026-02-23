@@ -133,22 +133,24 @@ describe("getMascot", () => {
   it("マスコット情報を返す", async () => {
     const mascot = await getMascot();
 
-    expect(mascot).toBeDefined();
-    expect(mascot.name).toBe(mockMascot.name);
+    expect(mascot).not.toBeNull();
+    expect(mascot!.name).toBe(mockMascot.name);
   });
 
   it("profile_jsonにプロフィール情報が含まれる", async () => {
     const mascot = await getMascot();
+    expect(mascot).not.toBeNull();
 
-    expect(mascot.profile_json).not.toBeNull();
-    expect(mascot.profile_json).toHaveProperty("birthday");
-    expect(mascot.profile_json).toHaveProperty("personality");
-    expect(mascot.profile_json).toHaveProperty("description");
+    expect(mascot!.profile_json).not.toBeNull();
+    expect(mascot!.profile_json).toHaveProperty("birthday");
+    expect(mascot!.profile_json).toHaveProperty("personality");
+    expect(mascot!.profile_json).toHaveProperty("description");
   });
 
   it("マスコット名が「エクセル」である", async () => {
     const mascot = await getMascot();
+    expect(mascot).not.toBeNull();
 
-    expect(mascot.name).toBe("エクセル");
+    expect(mascot!.name).toBe("エクセル");
   });
 });

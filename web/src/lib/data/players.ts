@@ -1,19 +1,34 @@
 /**
  * 選手データ取得関数
  *
- * 現在はモックデータを返す。Supabase接続後はDBクエリに置き換える。
+ * Supabase から Server Components 経由でデータを取得する。
+ * box_scores からの平均スタッツ集計はデータ量が小さいため
+ * （60試合×12選手=720行）クライアント側で集計する。
  */
 
-import type { Player, PlayerWithSeason, BoxScore } from "@/lib/types/database";
-import {
-  mockPlayers,
-  mockPlayerSeasons,
-  mockPlayerAverages,
-  mockBoxScores,
-  mockGames,
-  mockTeams,
-  type PlayerSeasonAverage,
-} from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase/server";
+import type { Player, PlayerWithSeason, BoxScore, Game } from "@/lib/types/database";
+
+// ================================================
+// 型定義
+// ================================================
+
+/** 選手のシーズン平均スタッツ */
+export type PlayerSeasonAverage = {
+  player_id: string;
+  games_played: number;
+  ppg: number;
+  rpg: number;
+  apg: number;
+  fg_pct: number;
+  tp_pct: number;
+  ft_pct: number;
+  spg: number;
+  bpg: number;
+  topg: number;  // ターンオーバー/試合
+  mpg: string;   // 出場時間/試合（"MM:SS"形式）
+  eff: number;   // 効率/試合
+};
 
 // ================================================
 // 選手取得関数
@@ -23,47 +38,98 @@ import {
  * 選手一覧を取得する（ポジションフィルタ対応）
  */
 export async function getPlayers(position?: string): Promise<PlayerWithSeason[]> {
-  let players = [...mockPlayers];
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("players")
+    .select("*, player_seasons(*)")
+    .order("number", { ascending: true });
 
   // ポジションフィルタ
   if (position && position !== "ALL") {
-    players = players.filter((p) => p.position === position);
+    query = query.eq("position", position);
   }
 
-  return players.map((p) => ({
-    ...p,
-    player_seasons: mockPlayerSeasons.filter((ps) => ps.player_id === p.id),
-  }));
+  const { data, error } = await query;
+
+  if (error || !data) return [];
+  return data as unknown as PlayerWithSeason[];
 }
 
 /**
- * 選手IDで選手を取得する
+ * 選手IDで選手を取得する（bleague_player_id でも検索可能）
  */
 export async function getPlayerById(playerId: string): Promise<PlayerWithSeason | null> {
-  const player = mockPlayers.find((p) => p.id === playerId || p.bleague_player_id === playerId);
-  if (!player) return null;
+  const supabase = await createClient();
 
-  return {
-    ...player,
-    player_seasons: mockPlayerSeasons.filter((ps) => ps.player_id === player.id),
-  };
+  // まず UUID で検索
+  const { data, error } = await supabase
+    .from("players")
+    .select("*, player_seasons(*)")
+    .eq("id", playerId)
+    .single();
+
+  if (!error && data) return data as unknown as PlayerWithSeason;
+
+  // UUID で見つからない場合は bleague_player_id で検索
+  const { data: data2, error: error2 } = await supabase
+    .from("players")
+    .select("*, player_seasons(*)")
+    .eq("bleague_player_id", playerId)
+    .single();
+
+  if (error2 || !data2) return null;
+  return data2 as unknown as PlayerWithSeason;
 }
 
 /**
- * 選手のシーズン平均スタッツを取得する
+ * 選手のシーズン平均スタッツを取得する（box_scores から集計）
  */
 export async function getPlayerAverage(playerId: string): Promise<PlayerSeasonAverage | null> {
-  return mockPlayerAverages.find((a) => a.player_id === playerId) ?? null;
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("box_scores")
+    .select("*")
+    .eq("player_id", playerId);
+
+  if (error || !data || data.length === 0) return null;
+
+  return _calcAverage(playerId, data as unknown as BoxScore[]);
 }
 
 /**
- * 選手の全シーズン平均スタッツを取得する（一覧表示用）
+ * 全選手の平均スタッツを取得する（一覧表示用）
  */
 export async function getAllPlayerAverages(): Promise<(PlayerSeasonAverage & { player: Player })[]> {
-  return mockPlayerAverages.map((avg) => ({
-    ...avg,
-    player: mockPlayers.find((p) => p.id === avg.player_id)!,
-  }));
+  const supabase = await createClient();
+
+  // アクティブ選手の一覧と全ボックススコアを取得
+  const [playersRes, boxRes] = await Promise.all([
+    supabase
+      .from("players")
+      .select("*, player_seasons!inner(*)")
+      .eq("player_seasons.is_active", true)
+      .order("number", { ascending: true }),
+    supabase
+      .from("box_scores")
+      .select("*"),
+  ]);
+
+  if (playersRes.error || !playersRes.data) return [];
+  if (boxRes.error || !boxRes.data) return [];
+
+  const players = playersRes.data as unknown as Player[];
+  const allBoxScores = boxRes.data as unknown as BoxScore[];
+
+  // 選手ごとに集計
+  return players
+    .map((player) => {
+      const playerBox = allBoxScores.filter((bs) => bs.player_id === player.id);
+      if (playerBox.length === 0) return null;
+      return { ..._calcAverage(player.id, playerBox), player };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
 }
 
 /**
@@ -72,20 +138,95 @@ export async function getAllPlayerAverages(): Promise<(PlayerSeasonAverage & { p
 export async function getPlayerGameLog(playerId: string): Promise<
   (BoxScore & { game_date: string; opponent_name: string; home_away: string; result: string })[]
 > {
-  const playerBoxScores = mockBoxScores.filter((bs) => bs.player_id === playerId);
+  const supabase = await createClient();
 
-  return playerBoxScores.map((bs) => {
-    const game = mockGames.find((g) => g.id === bs.game_id)!;
-    const opponent = mockTeams.find((t) => t.id === game.opponent_team_id)!;
+  // ボックススコアと試合情報を取得
+  const { data, error } = await supabase
+    .from("box_scores")
+    .select("*, game:games(*, opponent:teams!opponent_team_id(short_name))")
+    .eq("player_id", playerId)
+    .order("game(game_date)", { ascending: false });
+
+  if (error || !data) return [];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any[]).map((bs) => {
+    const game = bs.game as Game & { opponent: { short_name: string } };
     const exScore = game.home_away === "HOME" ? game.score_home! : game.score_away!;
     const oppScore = game.home_away === "HOME" ? game.score_away! : game.score_home!;
 
     return {
       ...bs,
+      game: undefined, // リレーションデータを除外
       game_date: game.game_date,
-      opponent_name: opponent.short_name,
+      opponent_name: game.opponent.short_name,
       home_away: game.home_away,
       result: exScore > oppScore ? `W ${exScore}-${oppScore}` : `L ${exScore}-${oppScore}`,
     };
   });
+}
+
+// ================================================
+// ヘルパー
+// ================================================
+
+/**
+ * ボックススコアの配列からシーズン平均スタッツを算出する
+ */
+function _calcAverage(playerId: string, boxScores: BoxScore[]): PlayerSeasonAverage {
+  const n = boxScores.length;
+  const sum = (key: keyof BoxScore) =>
+    boxScores.reduce((acc, bs) => acc + ((bs[key] as number) ?? 0), 0);
+
+  const totalFgm = sum("fgm");
+  const totalFga = sum("fga");
+  const totalTpm = sum("tpm");
+  const totalTpa = sum("tpa");
+  const totalFtm = sum("ftm");
+  const totalFta = sum("fta");
+
+  return {
+    player_id: playerId,
+    games_played: n,
+    ppg: _round(sum("pts") / n),
+    rpg: _round(sum("reb") / n),
+    apg: _round(sum("ast") / n),
+    fg_pct: totalFga > 0 ? _round((totalFgm / totalFga) * 100) : 0,
+    tp_pct: totalTpa > 0 ? _round((totalTpm / totalTpa) * 100) : 0,
+    ft_pct: totalFta > 0 ? _round((totalFtm / totalFta) * 100) : 0,
+    spg: _round(sum("stl") / n),
+    bpg: _round(sum("blk") / n),
+    topg: _round(sum("tov") / n),
+    mpg: _calcAvgMinutes(boxScores),
+    eff: _round(sum("eff") / n),
+  };
+}
+
+/**
+ * 出場時間の平均を "MM:SS" 形式で算出する
+ */
+function _calcAvgMinutes(boxScores: BoxScore[]): string {
+  let totalSeconds = 0;
+  let validCount = 0;
+
+  for (const bs of boxScores) {
+    if (!bs.minutes) continue;
+    const parts = bs.minutes.split(":");
+    if (parts.length === 2) {
+      totalSeconds += parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+      validCount++;
+    }
+  }
+
+  if (validCount === 0) return "0:00";
+
+  const avgSeconds = Math.round(totalSeconds / validCount);
+  const mins = Math.floor(avgSeconds / 60);
+  const secs = avgSeconds % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+/** 小数第1位に丸める */
+function _round(value: number): number {
+  return Math.round(value * 10) / 10;
 }

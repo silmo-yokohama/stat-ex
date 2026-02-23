@@ -7,7 +7,7 @@ import { Icon } from "@/components/ui/Icon";
 import { PlayersScatterChart } from "@/components/players/PlayerCharts";
 import { PlayerAvatar } from "@/components/players/PlayerAvatar";
 import type { Player } from "@/lib/types/database";
-import type { PlayerSeasonAverage } from "@/lib/mock-data";
+import type { PlayerSeasonAverage } from "@/lib/data/players";
 
 export const metadata: Metadata = {
   title: "選手一覧",
