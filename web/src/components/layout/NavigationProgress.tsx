@@ -115,19 +115,28 @@ export function NavigationProgress() {
 
     if (state === "loading") {
       // ローディング中だった → 完了アニメーション
-      setProgress(100);
-      setState("completing");
+      // requestAnimationFrame でラップして next paint で state 更新する
+      const rafId = requestAnimationFrame(() => {
+        setProgress(100);
+        setState("completing");
+      });
 
       const completeTimer = setTimeout(() => {
         setState("idle");
         setProgress(0);
       }, 400);
-      return () => clearTimeout(completeTimer);
+      return () => {
+        cancelAnimationFrame(rafId);
+        clearTimeout(completeTimer);
+      };
     }
 
     // 遅延中に遷移完了 → バーを表示せずリセット
-    setState("idle");
-    setProgress(0);
+    const rafId = requestAnimationFrame(() => {
+      setState("idle");
+      setProgress(0);
+    });
+    return () => cancelAnimationFrame(rafId);
   }, [pathname, state, cleanup]);
 
   if (state === "idle") return null;

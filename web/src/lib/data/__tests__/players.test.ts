@@ -18,7 +18,6 @@ import {
   mockPlayerSeasons,
   mockPlayerAverages,
   mockBoxScores,
-  mockGames,
   mockTeams,
 } from "@/lib/mock-data";
 

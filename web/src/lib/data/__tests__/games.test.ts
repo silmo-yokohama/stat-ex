@@ -18,7 +18,7 @@ import {
   getScoreTrend,
   getCurrentStreak,
 } from "@/lib/data/games";
-import { mockGames, mockTeams } from "@/lib/mock-data";
+import { mockGames } from "@/lib/mock-data";
 import type { Game } from "@/lib/types/database";
 
 // ================================================

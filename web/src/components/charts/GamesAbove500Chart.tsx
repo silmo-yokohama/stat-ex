@@ -83,6 +83,98 @@ const tooltipBaseStyle: React.CSSProperties = {
 };
 
 // ================================================
+// サブコンポーネント
+// ================================================
+
+/** gamesAbove値を +N / -N / 0 形式にフォーマットする */
+function formatGamesAbove(v: number): string {
+  return v > 0 ? `+${v}` : String(v);
+}
+
+/**
+ * カスタムツールチップ
+ *
+ * 横浜EXを先頭に太字表示し、他チームは値の降順で表示する。
+ * ※ ESLint react-hooks/static-components 対策でコンポーネント外に定義
+ */
+function PennantTooltip({
+  active,
+  payload,
+  label,
+  exTeamName,
+}: {
+  active?: boolean;
+  payload?: Array<{ name: string; value: number; color: string }>;
+  label?: number;
+  exTeamName?: string;
+}) {
+  if (!active || !payload?.length) return null;
+
+  // 有効なエントリを値の降順でソート
+  const entries = payload
+    .filter((p) => p.value != null)
+    .sort((a, b) => b.value - a.value);
+
+  // 横浜EXのエントリを分離
+  const exEntry = entries.find((e) => e.name === exTeamName);
+  const others = entries.filter((e) => e.name !== exTeamName);
+
+  return (
+    <div style={{ ...tooltipBaseStyle, maxHeight: "280px", overflowY: "auto" }}>
+      <p
+        style={{
+          fontWeight: 600,
+          marginBottom: 4,
+          borderBottom: "1px solid #e2e4e6",
+          paddingBottom: 4,
+        }}
+      >
+        第{label}試合
+      </p>
+
+      {/* 横浜EX（常に先頭・太字・グリーン） */}
+      {exEntry && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+            fontWeight: 700,
+            color: COLOR_EX,
+            marginBottom: 4,
+            paddingBottom: 4,
+            borderBottom: "1px solid #f0f0f0",
+          }}
+        >
+          <span>{exEntry.name}</span>
+          <span>{formatGamesAbove(exEntry.value)}</span>
+        </div>
+      )}
+
+      {/* 他チーム（値の降順） */}
+      {others.map((entry) => (
+        <div
+          key={entry.name}
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+            lineHeight: "1.7",
+          }}
+        >
+          <span style={{ color: entry.color, fontWeight: 500 }}>
+            {entry.name}
+          </span>
+          <span style={{ color: "#606060" }}>
+            {formatGamesAbove(entry.value)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ================================================
 // メインコンポーネント
 // ================================================
 
@@ -120,89 +212,6 @@ export function GamesAbove500Chart({ teams }: Props) {
     teamColorMap[t.teamName] = TEAM_PALETTE[i % TEAM_PALETTE.length];
   });
 
-  /** gamesAbove値を +N / -N / 0 形式にフォーマットする */
-  const formatValue = (v: number) => (v > 0 ? `+${v}` : String(v));
-
-  /**
-   * カスタムツールチップ
-   *
-   * 横浜EXを先頭に太字表示し、他チームは値の降順で表示する。
-   */
-  const CustomTooltip = ({
-    active,
-    payload,
-    label,
-  }: {
-    active?: boolean;
-    payload?: Array<{ name: string; value: number; color: string }>;
-    label?: number;
-  }) => {
-    if (!active || !payload?.length) return null;
-
-    // 有効なエントリを値の降順でソート
-    const entries = payload
-      .filter((p) => p.value != null)
-      .sort((a, b) => b.value - a.value);
-
-    // 横浜EXのエントリを分離
-    const exEntry = entries.find((e) => e.name === exTeam?.teamName);
-    const others = entries.filter((e) => e.name !== exTeam?.teamName);
-
-    return (
-      <div style={{ ...tooltipBaseStyle, maxHeight: "280px", overflowY: "auto" }}>
-        <p
-          style={{
-            fontWeight: 600,
-            marginBottom: 4,
-            borderBottom: "1px solid #e2e4e6",
-            paddingBottom: 4,
-          }}
-        >
-          第{label}試合
-        </p>
-
-        {/* 横浜EX（常に先頭・太字・グリーン） */}
-        {exEntry && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: 12,
-              fontWeight: 700,
-              color: COLOR_EX,
-              marginBottom: 4,
-              paddingBottom: 4,
-              borderBottom: "1px solid #f0f0f0",
-            }}
-          >
-            <span>{exEntry.name}</span>
-            <span>{formatValue(exEntry.value)}</span>
-          </div>
-        )}
-
-        {/* 他チーム（値の降順） */}
-        {others.map((entry) => (
-          <div
-            key={entry.name}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: 12,
-              lineHeight: "1.7",
-            }}
-          >
-            <span style={{ color: entry.color, fontWeight: 500 }}>
-              {entry.name}
-            </span>
-            <span style={{ color: "#606060" }}>
-              {formatValue(entry.value)}
-            </span>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   return (
     <ResponsiveContainer width="100%" height={350}>
       <LineChart
@@ -225,11 +234,13 @@ export function GamesAbove500Chart({ teams }: Props) {
           axisLine={false}
           tickLine={false}
           width={35}
-          tickFormatter={(v: number) => formatValue(v)}
+          tickFormatter={(v: number) => formatGamesAbove(v)}
         />
 
         {/* ツールチップ */}
-        <Tooltip content={<CustomTooltip />} />
+        <Tooltip
+          content={<PennantTooltip exTeamName={exTeam?.teamName} />}
+        />
 
         {/* .500ライン（基準線） */}
         <ReferenceLine

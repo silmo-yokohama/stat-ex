@@ -5,7 +5,7 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
-import type { TeamStats, Standing, H2HRecord, Injury, Game, Player, BoxScore } from "@/lib/types/database";
+import type { TeamStats, Standing, H2HRecord, Injury, Game, Player } from "@/lib/types/database";
 
 // ================================================
 // 型定義
