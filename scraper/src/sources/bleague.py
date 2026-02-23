@@ -319,6 +319,10 @@ def _parse_boxscores(boxscores: list, team_side: str) -> list[dict]:
             if bs.get("PeriodCategory") != 18:
                 continue
 
+            # TEAM TOTAL行をスキップ（PlayerIDが空のレコード）
+            if not bs.get("PlayerID"):
+                continue
+
             # FGM/FGA は 2P + 3P から算出（APIに直接のフィールドがない）
             pt2m = _safe_int(bs.get("PT2M"))
             pt2a = _safe_int(bs.get("PT2A"))

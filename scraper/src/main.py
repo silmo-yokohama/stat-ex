@@ -655,18 +655,25 @@ def _replace_injuries(client: Client, cache: LookupCache, data: dict) -> None:
     """
     injuries = data.get("injuries", [])
 
-    # 全件削除
+    # 選手名 → UUID のマッピング構築（DELETE前に行い、空なら安全にスキップ）
+    players_res = client.table("players").select("id, name").execute()
+    player_name_map: dict[str, str] = {}
+    for p in players_res.data or []:
+        # 空名前のゴーストレコードを除外
+        if p["name"]:
+            player_name_map[p["name"]] = p["id"]
+
+    # playersが空の場合、DELETEせずにスキップ（データロスト防止）
+    if not player_name_map:
+        print("[STAT-EX]   インジュアリー: 選手データ未登録のためスキップ")
+        return
+
+    # 全件削除（選手マッチングの準備が整ってからDELETE）
     try:
         client.table("injuries").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
     except Exception as e:
         output_error(f"インジュアリー削除エラー: {e}", "supabase.injuries")
         return
-
-    # 選手名 → UUID のマッピング構築
-    players_res = client.table("players").select("id, name").execute()
-    player_name_map: dict[str, str] = {}
-    for p in players_res.data or []:
-        player_name_map[p["name"]] = p["id"]
 
     count = 0
     for inj in injuries:
