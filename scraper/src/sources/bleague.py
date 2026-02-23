@@ -218,32 +218,35 @@ def fetch_box_score(schedule_key: str) -> dict:
     if not game_data:
         return {"error": "ゲームデータの抽出に失敗", "schedule_key": schedule_key}
 
+    # 試合基本情報は Game オブジェクト内にネストされている
+    game_obj = game_data.get("Game", {})
+
     # クォーター別スコア
     quarter_scores = {
-        "q1_home": _safe_int(game_data.get("HomeTeamScore01")),
-        "q1_away": _safe_int(game_data.get("AwayTeamScore01")),
-        "q2_home": _safe_int(game_data.get("HomeTeamScore02")),
-        "q2_away": _safe_int(game_data.get("AwayTeamScore02")),
-        "q3_home": _safe_int(game_data.get("HomeTeamScore03")),
-        "q3_away": _safe_int(game_data.get("AwayTeamScore03")),
-        "q4_home": _safe_int(game_data.get("HomeTeamScore04")),
-        "q4_away": _safe_int(game_data.get("AwayTeamScore04")),
+        "q1_home": _safe_int(game_obj.get("HomeTeamScore01")),
+        "q1_away": _safe_int(game_obj.get("AwayTeamScore01")),
+        "q2_home": _safe_int(game_obj.get("HomeTeamScore02")),
+        "q2_away": _safe_int(game_obj.get("AwayTeamScore02")),
+        "q3_home": _safe_int(game_obj.get("HomeTeamScore03")),
+        "q3_away": _safe_int(game_obj.get("AwayTeamScore03")),
+        "q4_home": _safe_int(game_obj.get("HomeTeamScore04")),
+        "q4_away": _safe_int(game_obj.get("AwayTeamScore04")),
     }
 
     # ボックススコア（ホーム・アウェイ）
     home_box = _parse_boxscores(game_data.get("HomeBoxscores", []), "home")
     away_box = _parse_boxscores(game_data.get("AwayBoxscores", []), "away")
 
-    # 試合情報
+    # 試合情報（Game オブジェクトのフィールド名で取得）
     game_info = {
         "schedule_key": schedule_key,
-        "home_team_name": game_data.get("HomeTeamName", ""),
-        "away_team_name": game_data.get("AwayTeamName", ""),
-        "score_home": _safe_int(game_data.get("HomeTeamScore")),
-        "score_away": _safe_int(game_data.get("AwayTeamScore")),
-        "venue": game_data.get("Arena", ""),
-        "attendance": _safe_int(game_data.get("Attendance")),
-        "referee": game_data.get("Referee", ""),
+        "home_team_name": game_obj.get("HomeTeamNameJ", ""),
+        "away_team_name": game_obj.get("AwayTeamNameJ", ""),
+        "score_home": _safe_int(game_obj.get("HomeTeamScore")),
+        "score_away": _safe_int(game_obj.get("AwayTeamScore")),
+        "venue": game_obj.get("StadiumNameJ", ""),
+        "attendance": _safe_int(game_obj.get("Attendance")),
+        "referee": game_obj.get("RefereeNameJ", ""),
     }
 
     return {
@@ -294,37 +297,71 @@ def _extract_game_data_from_html(html: str) -> dict | None:
 
 
 def _parse_boxscores(boxscores: list, team_side: str) -> list[dict]:
-    """ボックススコア配列をパースする"""
+    """
+    ボックススコア配列をパースする
+
+    B.LEAGUE APIは1選手あたり7レコード（Q1-Q4, 前半, 後半, 全体）を返す。
+    PeriodCategory=18（試合全体合計）のみ抽出する。
+
+    フィールド名マッピング（B.LEAGUE API → STAT-EX内部）:
+      PlayerNameJ → player_name     PlayerNameE → player_name_en
+      PlayerNo    → player_number   StartingFlg → is_starter (1=true, null=false)
+      PlayTime    → minutes         Point       → pts
+      PT2M/PT2A   → 2P成功/試投     PT3M/PT3A   → 3P成功/試投 (tpm/tpa)
+      FTM/FTA     → FT成功/試投     RB_OFF/RB_DEF/RB_TOT → リバウンド
+      AS → ast  TO → tov  ST → stl  BS → blk  FOUL → fouls
+      EFF → eff  PLUSMINUS → plus_minus
+    """
     result = []
     for bs in boxscores:
         try:
+            # PeriodCategory=18（試合全体合計）のみ対象
+            if bs.get("PeriodCategory") != 18:
+                continue
+
+            # FGM/FGA は 2P + 3P から算出（APIに直接のフィールドがない）
+            pt2m = _safe_int(bs.get("PT2M"))
+            pt2a = _safe_int(bs.get("PT2A"))
+            pt3m = _safe_int(bs.get("PT3M"))
+            pt3a = _safe_int(bs.get("PT3A"))
+            fgm = pt2m + pt3m
+            fga = pt2a + pt3a
+            ftm = _safe_int(bs.get("FTM"))
+            fta = _safe_int(bs.get("FTA"))
+
+            # シュート確率を算出
+            fg_pct = round(fgm / fga, 3) if fga > 0 else None
+            tp_pct = round(pt3m / pt3a, 3) if pt3a > 0 else None
+            ft_pct = round(ftm / fta, 3) if fta > 0 else None
+
             result.append({
                 "player_id": str(bs.get("PlayerID", "")),
-                "player_name": bs.get("PlayerName", ""),
+                "player_name": bs.get("PlayerNameJ", ""),
+                "player_name_en": bs.get("PlayerNameE", ""),
                 "player_number": bs.get("PlayerNo", ""),
                 "team_side": team_side,
-                "is_starter": bs.get("StartingFlg", "0") == "1",
-                "minutes": bs.get("PlayingTime", ""),
+                "is_starter": bs.get("StartingFlg") == 1,
+                "minutes": bs.get("PlayTime", ""),
                 "pts": _safe_int(bs.get("Point")),
-                "fgm": _safe_int(bs.get("FieldGoalsMade")),
-                "fga": _safe_int(bs.get("FieldGoalsAttempted")),
-                "fg_pct": _safe_float(bs.get("FieldGoalsPercentage")),
-                "tpm": _safe_int(bs.get("ThreePointersMade")),
-                "tpa": _safe_int(bs.get("ThreePointersAttempted")),
-                "tp_pct": _safe_float(bs.get("ThreePointersPercentage")),
-                "ftm": _safe_int(bs.get("FreeThrowsMade")),
-                "fta": _safe_int(bs.get("FreeThrowsAttempted")),
-                "ft_pct": _safe_float(bs.get("FreeThrowsPercentage")),
-                "or_reb": _safe_int(bs.get("OffensiveRebounds")),
-                "dr_reb": _safe_int(bs.get("DefensiveRebounds")),
-                "reb": _safe_int(bs.get("Rebounds")),
-                "ast": _safe_int(bs.get("Assists")),
-                "tov": _safe_int(bs.get("Turnovers")),
-                "stl": _safe_int(bs.get("Steals")),
-                "blk": _safe_int(bs.get("BlockShots")),
-                "fouls": _safe_int(bs.get("Fouls")),
-                "eff": _safe_int(bs.get("Efficiency")),
-                "plus_minus": _safe_int(bs.get("PlusMinus")),
+                "fgm": fgm,
+                "fga": fga,
+                "fg_pct": fg_pct,
+                "tpm": pt3m,
+                "tpa": pt3a,
+                "tp_pct": tp_pct,
+                "ftm": ftm,
+                "fta": fta,
+                "ft_pct": ft_pct,
+                "or_reb": _safe_int(bs.get("RB_OFF")),
+                "dr_reb": _safe_int(bs.get("RB_DEF")),
+                "reb": _safe_int(bs.get("RB_TOT")),
+                "ast": _safe_int(bs.get("AS")),
+                "tov": _safe_int(bs.get("TO")),
+                "stl": _safe_int(bs.get("ST")),
+                "blk": _safe_int(bs.get("BS")),
+                "fouls": _safe_int(bs.get("FOUL")),
+                "eff": _safe_int(bs.get("EFF")),
+                "plus_minus": _safe_int(bs.get("PLUSMINUS")),
             })
         except Exception as e:
             output_error(f"ボックススコアパースエラー: {e}", "bleague.boxscore")
@@ -395,6 +432,11 @@ def fetch_standings() -> dict:
                 if team_id:
                     seen_team_ids.add(team_id)
 
+                # 順位表テーブル列構造（15列）:
+                # [0]順位 [1]クラブ [2]勝 [3]負 [4]勝率 [5]差
+                # [6]得点 [7]失点 [8]得失点差 [9]ホーム(W-L) [10]アウェー(W-L)
+                # [11]過去5試合 [12]連勝/連敗 [13]地区優勝 [14]対戦成績
+                gb_text = cell_texts[5] if len(cell_texts) > 5 else ""
                 standings.append({
                     "rank": _safe_int(cell_texts[0]) if cell_texts[0].isdigit() else None,
                     "team_name": cell_texts[1] if len(cell_texts) > 1 else "",
@@ -402,7 +444,12 @@ def fetch_standings() -> dict:
                     "wins": _safe_int(cell_texts[2]) if len(cell_texts) > 2 else 0,
                     "losses": _safe_int(cell_texts[3]) if len(cell_texts) > 3 else 0,
                     "win_pct": _safe_float(cell_texts[4]) if len(cell_texts) > 4 else None,
-                    "games_behind": _safe_float(cell_texts[5]) if len(cell_texts) > 5 else None,
+                    "games_behind": _safe_float(gb_text) if gb_text and gb_text != "--" else None,
+                    "points_for": _safe_float(cell_texts[6]) if len(cell_texts) > 6 else None,
+                    "points_against": _safe_float(cell_texts[7]) if len(cell_texts) > 7 else None,
+                    "point_diff": _safe_float(cell_texts[8]) if len(cell_texts) > 8 else None,
+                    "last5": cell_texts[11] if len(cell_texts) > 11 else None,
+                    "streak": cell_texts[12] if len(cell_texts) > 12 else None,
                 })
             except Exception as e:
                 errors.append({"source": "standings.row", "message": str(e)})

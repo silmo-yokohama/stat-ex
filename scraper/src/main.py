@@ -514,6 +514,11 @@ def _upsert_standings(client: Client, cache: LookupCache, data: dict) -> None:
                     "losses": s.get("losses", 0),
                     "win_pct": s.get("win_pct"),
                     "games_behind": s.get("games_behind"),
+                    "points_for": s.get("points_for"),
+                    "points_against": s.get("points_against"),
+                    "point_diff": s.get("point_diff"),
+                    "streak": s.get("streak"),
+                    "last5": s.get("last5"),
                 },
                 on_conflict="season_id,team_id",
             ).execute()
@@ -776,6 +781,7 @@ def _register_new_player(
     """
     bleague_pid = str(player_stats.get("player_id", ""))
     player_name = player_stats.get("player_name", "不明")
+    player_name_en = player_stats.get("player_name_en", "")
     # player_number が空文字列の場合はNoneに変換（DBカラムは INTEGER 型）
     player_number = player_stats.get("player_number")
     if player_number is not None:
@@ -788,6 +794,7 @@ def _register_new_player(
         res = client.table("players").insert({
             "bleague_player_id": bleague_pid,
             "name": player_name,
+            "name_en": player_name_en or None,
             "number": player_number,
         }).execute()
 
