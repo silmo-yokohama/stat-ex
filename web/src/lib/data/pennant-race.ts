@@ -24,7 +24,7 @@ import type { PennantRaceTeam } from "@/components/charts/GamesAbove500Chart";
 export function buildPennantRaceData(
   standings: { short_name: string; wins: number; losses: number }[],
   exGameResults: boolean[],
-  exShortName: string,
+  exShortName: string
 ): PennantRaceTeam[] {
   // 横浜EXの累積 gamesAbove500 を試合ごとに計算
   let wins = 0;

@@ -53,9 +53,7 @@ const alfaSlabOne = Alfa_Slab_One({
  * 各ページの固有メタデータは各 page.tsx の `metadata` エクスポートで上書きされる。
  */
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://stat-ex.vercel.app",
-  ),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://stat-ex.vercel.app"),
   title: {
     default: `${SITE.name} - ${SITE.description}`,
     template: `%s | ${SITE.name}`,

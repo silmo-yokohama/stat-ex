@@ -88,9 +88,13 @@ function ScoreTooltip({
   return (
     <div style={tooltipStyle}>
       <p style={{ margin: 0, fontWeight: 600, fontSize: "13px" }}>
-        <span style={{ color: "#006d3b" }}>{homeTeamName} {home}</span>
+        <span style={{ color: "#006d3b" }}>
+          {homeTeamName} {home}
+        </span>
         <span style={{ color: "#606060" }}> - </span>
-        <span style={{ color: "#9CA3AF" }}>{away} {awayTeamName}</span>
+        <span style={{ color: "#9CA3AF" }}>
+          {away} {awayTeamName}
+        </span>
       </p>
     </div>
   );
@@ -113,10 +117,7 @@ function ScoreTooltip({
  */
 export function ScoreFlowChart({ data, homeTeamName, awayTeamName }: Props) {
   // データにインデックスを付与（X軸のデータキーとして使用）
-  const indexedData = useMemo(
-    () => data.map((point, i) => ({ ...point, index: i })),
-    [data]
-  );
+  const indexedData = useMemo(() => data.map((point, i) => ({ ...point, index: i })), [data]);
 
   // クォーター境界のインデックスを算出（quarter値が変わる最初のポイント）
   const quarterBoundaries = useMemo(() => {
@@ -136,18 +137,13 @@ export function ScoreFlowChart({ data, homeTeamName, awayTeamName }: Props) {
 
   if (data.length === 0) {
     return (
-      <p className="py-8 text-center text-sm text-muted-foreground">
-        スコアデータがありません
-      </p>
+      <p className="py-8 text-center text-sm text-muted-foreground">スコアデータがありません</p>
     );
   }
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <ComposedChart
-        data={indexedData}
-        margin={{ top: 16, right: 8, left: -16, bottom: 0 }}
-      >
+      <ComposedChart data={indexedData} margin={{ top: 16, right: 8, left: -16, bottom: 0 }}>
         {/* ホームチームのエリア塗りグラデーション定義 */}
         <defs>
           <linearGradient id="homeAreaGradient" x1="0" y1="0" x2="0" y2="1">
@@ -159,12 +155,7 @@ export function ScoreFlowChart({ data, homeTeamName, awayTeamName }: Props) {
         <CartesianGrid strokeDasharray="3 3" stroke="#e2e4e6" />
 
         {/* X軸: ラベルなし（クォーター境界の参照線で代替） */}
-        <XAxis
-          dataKey="index"
-          tick={false}
-          axisLine={{ stroke: "#e2e4e6" }}
-          tickLine={false}
-        />
+        <XAxis dataKey="index" tick={false} axisLine={{ stroke: "#e2e4e6" }} tickLine={false} />
 
         {/* Y軸: 得点 */}
         <YAxis
@@ -176,19 +167,12 @@ export function ScoreFlowChart({ data, homeTeamName, awayTeamName }: Props) {
 
         {/* カスタムツールチップ */}
         <Tooltip
-          content={
-            <ScoreTooltip
-              homeTeamName={homeTeamName}
-              awayTeamName={awayTeamName}
-            />
-          }
+          content={<ScoreTooltip homeTeamName={homeTeamName} awayTeamName={awayTeamName} />}
         />
 
         {/* 凡例 */}
         <Legend
-          formatter={(value: string) =>
-            value === "homeTotal" ? homeTeamName : awayTeamName
-          }
+          formatter={(value: string) => (value === "homeTotal" ? homeTeamName : awayTeamName)}
           wrapperStyle={{ fontSize: "12px" }}
         />
 

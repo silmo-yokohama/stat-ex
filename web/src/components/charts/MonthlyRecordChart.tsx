@@ -73,21 +73,9 @@ export function MonthlyRecordChart({ data }: Props) {
           wrapperStyle={{ fontSize: "12px" }}
         />
         {/* 勝ち: ダークグリーン（下段に配置） */}
-        <Bar
-          dataKey="wins"
-          stackId="record"
-          fill="#006d3b"
-          radius={[0, 0, 0, 0]}
-          barSize={32}
-        />
+        <Bar dataKey="wins" stackId="record" fill="#006d3b" radius={[0, 0, 0, 0]} barSize={32} />
         {/* 負け: グレー（上段に積み上げ） */}
-        <Bar
-          dataKey="losses"
-          stackId="record"
-          fill="#9CA3AF"
-          radius={[4, 4, 0, 0]}
-          barSize={32}
-        />
+        <Bar dataKey="losses" stackId="record" fill="#9CA3AF" radius={[4, 4, 0, 0]} barSize={32} />
       </BarChart>
     </ResponsiveContainer>
   );

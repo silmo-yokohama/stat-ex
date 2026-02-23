@@ -51,16 +51,9 @@ export function QuarterRadar({ data }: Props) {
         {/* レーダーグリッド */}
         <PolarGrid stroke="#e2e4e6" />
         {/* 軸ラベル（Q1〜Q4） */}
-        <PolarAngleAxis
-          dataKey="quarter"
-          tick={{ fontSize: 12, fill: "#606060" }}
-        />
+        <PolarAngleAxis dataKey="quarter" tick={{ fontSize: 12, fill: "#606060" }} />
         {/* 数値目盛り */}
-        <PolarRadiusAxis
-          angle={90}
-          tick={{ fontSize: 10, fill: "#606060" }}
-          axisLine={false}
-        />
+        <PolarRadiusAxis angle={90} tick={{ fontSize: 10, fill: "#606060" }} axisLine={false} />
         <Tooltip
           contentStyle={tooltipStyle}
           formatter={(value: number | undefined, name: string | undefined) => [
@@ -69,9 +62,7 @@ export function QuarterRadar({ data }: Props) {
           ]}
         />
         <Legend
-          formatter={(value: string) =>
-            value === "avgFor" ? "平均得点" : "平均失点"
-          }
+          formatter={(value: string) => (value === "avgFor" ? "平均得点" : "平均失点")}
           wrapperStyle={{ fontSize: "12px" }}
         />
         {/* 平均得点: ダークグリーン */}

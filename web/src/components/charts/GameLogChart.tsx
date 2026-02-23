@@ -51,47 +51,20 @@ const tooltipStyle = {
  * ScoreTrendChart と同じパターンを踏襲。
  * 勝ち=●（ダークグリーン、白ストローク）、負け=×（グレー×印）
  */
-const CustomDot = (props: {
-  cx?: number;
-  cy?: number;
-  payload?: GameLogData;
-}) => {
+const CustomDot = (props: { cx?: number; cy?: number; payload?: GameLogData }) => {
   const { cx = 0, cy = 0, payload } = props;
   if (!payload) return null;
 
   // 勝ち: ダークグリーンの丸ドット
   if (payload.result === "W") {
-    return (
-      <circle
-        cx={cx}
-        cy={cy}
-        r={4}
-        fill="#006d3b"
-        stroke="#fff"
-        strokeWidth={2}
-      />
-    );
+    return <circle cx={cx} cy={cy} r={4} fill="#006d3b" stroke="#fff" strokeWidth={2} />;
   }
 
   // 負け: グレーの×印
   return (
     <g>
-      <line
-        x1={cx - 3}
-        y1={cy - 3}
-        x2={cx + 3}
-        y2={cy + 3}
-        stroke="#9CA3AF"
-        strokeWidth={2}
-      />
-      <line
-        x1={cx + 3}
-        y1={cy - 3}
-        x2={cx - 3}
-        y2={cy + 3}
-        stroke="#9CA3AF"
-        strokeWidth={2}
-      />
+      <line x1={cx - 3} y1={cy - 3} x2={cx + 3} y2={cy + 3} stroke="#9CA3AF" strokeWidth={2} />
+      <line x1={cx + 3} y1={cy - 3} x2={cx - 3} y2={cy + 3} stroke="#9CA3AF" strokeWidth={2} />
     </g>
   );
 };
@@ -128,9 +101,7 @@ const CustomTooltip = ({
       <p style={{ margin: "4px 0 0", color: "#606060" }}>
         得点: <span style={{ fontWeight: 600 }}>{data.pts}点</span>
       </p>
-      <p style={{ margin: "2px 0 0", color: resultColor, fontWeight: 600 }}>
-        {resultLabel}
-      </p>
+      <p style={{ margin: "2px 0 0", color: resultColor, fontWeight: 600 }}>{resultLabel}</p>
     </div>
   );
 };
@@ -144,10 +115,7 @@ const CustomTooltip = ({
 export function GameLogChart({ data, averagePts }: Props) {
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <ComposedChart
-        data={data}
-        margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
-      >
+      <ComposedChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e2e4e6" />
         <XAxis
           dataKey="label"

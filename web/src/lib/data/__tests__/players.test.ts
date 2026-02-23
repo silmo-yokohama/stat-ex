@@ -110,9 +110,7 @@ describe("getPlayerById", () => {
     expect(Array.isArray(player!.player_seasons)).toBe(true);
 
     // player_seasonsが正しい選手IDに紐づいていることを確認
-    const expectedSeasons = mockPlayerSeasons.filter(
-      (ps) => ps.player_id === targetPlayer.id
-    );
+    const expectedSeasons = mockPlayerSeasons.filter((ps) => ps.player_id === targetPlayer.id);
     expect(player!.player_seasons).toHaveLength(expectedSeasons.length);
   });
 
@@ -198,9 +196,7 @@ describe("getPlayerGameLog", () => {
     const playerId = mockBoxScores[0].player_id;
     const gameLog = await getPlayerGameLog(playerId);
 
-    const expectedCount = mockBoxScores.filter(
-      (bs) => bs.player_id === playerId
-    ).length;
+    const expectedCount = mockBoxScores.filter((bs) => bs.player_id === playerId).length;
     expect(gameLog).toHaveLength(expectedCount);
   });
 

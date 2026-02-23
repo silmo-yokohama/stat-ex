@@ -46,11 +46,7 @@ const DEFAULT_TEAM_STATS: TeamStats = {
 export async function getTeamStats(): Promise<TeamStats> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("team_stats")
-    .select("*")
-    .limit(1)
-    .single();
+  const { data, error } = await supabase.from("team_stats").select("*").limit(1).single();
 
   if (error || !data) return DEFAULT_TEAM_STATS;
   return data as unknown as TeamStats;
@@ -59,7 +55,9 @@ export async function getTeamStats(): Promise<TeamStats> {
 /**
  * B2順位表を取得する（チーム名付き）
  */
-export async function getStandings(): Promise<(Standing & { team_name: string; short_name: string })[]> {
+export async function getStandings(): Promise<
+  (Standing & { team_name: string; short_name: string })[]
+> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -81,7 +79,9 @@ export async function getStandings(): Promise<(Standing & { team_name: string; s
 /**
  * H2H対戦成績を取得する（チーム名付き）
  */
-export async function getH2HRecords(): Promise<(H2HRecord & { opponent_name: string; short_name: string })[]> {
+export async function getH2HRecords(): Promise<
+  (H2HRecord & { opponent_name: string; short_name: string })[]
+> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -99,20 +99,21 @@ export async function getH2HRecords(): Promise<(H2HRecord & { opponent_name: str
       short_name: h.opponent.short_name,
       opponent: undefined,
     }))
-    .sort((a: { wins: number; losses: number }, b: { wins: number; losses: number }) =>
-      (b.wins - b.losses) - (a.wins - a.losses)
+    .sort(
+      (a: { wins: number; losses: number }, b: { wins: number; losses: number }) =>
+        b.wins - b.losses - (a.wins - a.losses)
     );
 }
 
 /**
  * インジュアリーリストを取得する（選手名付き）
  */
-export async function getInjuries(): Promise<(Injury & { player_name: string; player_number: number | null })[]> {
+export async function getInjuries(): Promise<
+  (Injury & { player_name: string; player_number: number | null })[]
+> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("injuries")
-    .select("*, player:players(name, number)");
+  const { data, error } = await supabase.from("injuries").select("*, player:players(name, number)");
 
   if (error || !data) return [];
 
@@ -141,14 +142,17 @@ export async function getTeamLeaders(): Promise<TeamLeader[]> {
   if (error || !data || data.length === 0) return [];
 
   // 選手ごとに集計
-  const playerStats = new Map<string, {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    player: any;
-    totalPts: number;
-    totalReb: number;
-    totalAst: number;
-    games: number;
-  }>();
+  const playerStats = new Map<
+    string,
+    {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      player: any;
+      totalPts: number;
+      totalReb: number;
+      totalAst: number;
+      games: number;
+    }
+  >();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const bs of data as any[]) {
@@ -171,31 +175,38 @@ export async function getTeamLeaders(): Promise<TeamLeader[]> {
   }
 
   // 各カテゴリのリーダーを算出
-  const categories: { key: string; label: string; unit: string; field: "totalPts" | "totalReb" | "totalAst" }[] = [
+  const categories: {
+    key: string;
+    label: string;
+    unit: string;
+    field: "totalPts" | "totalReb" | "totalAst";
+  }[] = [
     { key: "pts", label: "得点", unit: "PPG", field: "totalPts" },
     { key: "reb", label: "リバウンド", unit: "RPG", field: "totalReb" },
     { key: "ast", label: "アシスト", unit: "APG", field: "totalAst" },
   ];
 
-  return categories.map(({ label, unit, field }) => {
-    let bestPlayer = null;
-    let bestAvg = 0;
+  return categories
+    .map(({ label, unit, field }) => {
+      let bestPlayer = null;
+      let bestAvg = 0;
 
-    for (const stats of playerStats.values()) {
-      const avg = stats[field] / stats.games;
-      if (avg > bestAvg) {
-        bestAvg = avg;
-        bestPlayer = stats.player;
+      for (const stats of playerStats.values()) {
+        const avg = stats[field] / stats.games;
+        if (avg > bestAvg) {
+          bestAvg = avg;
+          bestPlayer = stats.player;
+        }
       }
-    }
 
-    return {
-      category: label,
-      player: bestPlayer as Player,
-      value: Math.round(bestAvg * 10) / 10,
-      unit,
-    };
-  }).filter((l) => l.player !== null);
+      return {
+        category: label,
+        player: bestPlayer as Player,
+        value: Math.round(bestAvg * 10) / 10,
+        unit,
+      };
+    })
+    .filter((l) => l.player !== null);
 }
 
 /**
@@ -218,15 +229,17 @@ export async function getMonthlyRecord(): Promise<
   // シーズン中の月（10月〜翌4月）
   const months = ["10", "11", "12", "01", "02", "03", "04"];
 
-  return months.map((m) => {
-    const monthGames = games.filter((g) => g.game_date.substring(5, 7) === m);
-    const wins = monthGames.filter((g) => {
-      const exScore = g.home_away === "HOME" ? g.score_home! : g.score_away!;
-      const oppScore = g.home_away === "HOME" ? g.score_away! : g.score_home!;
-      return exScore > oppScore;
-    }).length;
-    return { month: m, wins, losses: monthGames.length - wins };
-  }).filter((m) => m.wins + m.losses > 0); // データのある月のみ
+  return months
+    .map((m) => {
+      const monthGames = games.filter((g) => g.game_date.substring(5, 7) === m);
+      const wins = monthGames.filter((g) => {
+        const exScore = g.home_away === "HOME" ? g.score_home! : g.score_away!;
+        const oppScore = g.home_away === "HOME" ? g.score_away! : g.score_home!;
+        return exScore > oppScore;
+      }).length;
+      return { month: m, wins, losses: monthGames.length - wins };
+    })
+    .filter((m) => m.wins + m.losses > 0); // データのある月のみ
 }
 
 /**

@@ -148,17 +148,8 @@ export async function getGameDetail(scheduleKey: string): Promise<GameDetail | n
       .eq("game_id", game.id)
       .order("is_starter", { ascending: false })
       .order("pts", { ascending: false }),
-    supabase
-      .from("game_comments")
-      .select("*")
-      .eq("game_id", game.id)
-      .single(),
-    supabase
-      .from("videos")
-      .select("*")
-      .eq("game_id", game.id)
-      .limit(1)
-      .single(),
+    supabase.from("game_comments").select("*").eq("game_id", game.id).single(),
+    supabase.from("videos").select("*").eq("game_id", game.id).limit(1).single(),
   ]);
 
   return {
@@ -198,9 +189,9 @@ export function getOppScore(game: Game): number | null {
 /**
  * 直近N試合の得点推移を取得する
  */
-export async function getScoreTrend(count: number = 10): Promise<
-  { game: GameWithOpponent; exScore: number; oppScore: number; win: boolean }[]
-> {
+export async function getScoreTrend(
+  count: number = 10
+): Promise<{ game: GameWithOpponent; exScore: number; oppScore: number; win: boolean }[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase

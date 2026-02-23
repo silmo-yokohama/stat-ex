@@ -17,10 +17,7 @@ import type { News, Video, Mascot, NewsSource } from "@/lib/types/database";
  * @param source ニュースソース（official/media）、未指定で全件
  * @param limit 取得件数（デフォルト10）
  */
-export async function getNews(
-  source?: NewsSource,
-  limit: number = 10
-): Promise<News[]> {
+export async function getNews(source?: NewsSource, limit: number = 10): Promise<News[]> {
   const supabase = await createClient();
 
   let query = supabase
@@ -63,11 +60,7 @@ export async function getVideos(limit: number = 10): Promise<Video[]> {
 export async function getMascot(): Promise<Mascot | null> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("mascot")
-    .select("*")
-    .limit(1)
-    .single();
+  const { data, error } = await supabase.from("mascot").select("*").limit(1).single();
 
   if (error || !data) return null;
   return data as unknown as Mascot;

@@ -122,13 +122,9 @@ export async function GET(
       },
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "不明なエラーが発生しました";
+    const message = error instanceof Error ? error.message : "不明なエラーが発生しました";
 
-    return NextResponse.json(
-      { error: message, schedule_key: scheduleKey },
-      { status: 502 }
-    );
+    return NextResponse.json({ error: message, schedule_key: scheduleKey }, { status: 502 });
   }
 }
 
@@ -195,14 +191,8 @@ async function fetchLiveGameData(scheduleKey: string): Promise<LiveResponse> {
   // ボックススコアをパース（配列でなければ空配列にフォールバック）
   const rawHome = gameData.HomeBoxscores;
   const rawAway = gameData.AwayBoxscores;
-  const homeBoxScores = parseBoxScores(
-    Array.isArray(rawHome) ? rawHome : [],
-    "home"
-  );
-  const awayBoxScores = parseBoxScores(
-    Array.isArray(rawAway) ? rawAway : [],
-    "away"
-  );
+  const homeBoxScores = parseBoxScores(Array.isArray(rawHome) ? rawHome : [], "home");
+  const awayBoxScores = parseBoxScores(Array.isArray(rawAway) ? rawAway : [], "away");
 
   return {
     game,
@@ -218,9 +208,7 @@ async function fetchLiveGameData(scheduleKey: string): Promise<LiveResponse> {
  * B.LEAGUE公式サイトの試合詳細ページでは、`_contexts_s3id.data` に
  * JSONデータが埋め込まれている。
  */
-function extractGameDataFromHtml(
-  html: string
-): Record<string, unknown> | null {
+function extractGameDataFromHtml(html: string): Record<string, unknown> | null {
   // パターン1: _contexts_s3id.data = {...};
   // ※ ES2017ターゲットのため s フラグの代わりに [\s\S] を使用
   const patterns = [
@@ -241,16 +229,12 @@ function extractGameDataFromHtml(
   }
 
   // フォールバック: scriptタグからJSONを探す
-  const scriptPattern =
-    /<script[^>]*>([\s\S]*?)<\/script>/gi;
+  const scriptPattern = /<script[^>]*>([\s\S]*?)<\/script>/gi;
   let scriptMatch: RegExpExecArray | null;
 
   while ((scriptMatch = scriptPattern.exec(html)) !== null) {
     const text = scriptMatch[1];
-    if (
-      text.includes("HomeBoxscores") ||
-      text.includes("HomeTeamScore01")
-    ) {
+    if (text.includes("HomeBoxscores") || text.includes("HomeTeamScore01")) {
       // JSONっぽい部分を抽出
       const jsonMatch = text.match(/\{[\s\S]*"HomeTeamScore01"[\s\S]*\}/);
       if (jsonMatch) {
@@ -271,10 +255,7 @@ function extractGameDataFromHtml(
  *
  * B.LEAGUE APIのフィールド名をSTAT-EXのカラム名にマッピングする。
  */
-function parseBoxScores(
-  boxScores: unknown[],
-  teamSide: "home" | "away"
-): LiveBoxScore[] {
+function parseBoxScores(boxScores: unknown[], teamSide: "home" | "away"): LiveBoxScore[] {
   const result: LiveBoxScore[] = [];
 
   for (const raw of boxScores) {

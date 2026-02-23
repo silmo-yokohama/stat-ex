@@ -4,10 +4,7 @@ import { getPlayerById, getPlayerAverage, getPlayerGameLog } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/Icon";
 import { Separator } from "@/components/ui/separator";
-import {
-  PlayerAbilityRadar,
-  PlayerGameLogChart,
-} from "@/components/players/PlayerCharts";
+import { PlayerAbilityRadar, PlayerGameLogChart } from "@/components/players/PlayerCharts";
 import { PlayerAvatar } from "@/components/players/PlayerAvatar";
 
 /** ページProps型（Next.js 16のPromise params） */
@@ -131,19 +128,15 @@ export default async function PlayerDetailPage({ params }: Props) {
           {/* 選手アバター画像 */}
           <PlayerAvatar player={player} size="xl" />
 
-
           {/* 選手基本情報 */}
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-foreground">
-                {player.name}
-              </h1>
+              <h1 className="text-2xl font-bold text-foreground">{player.name}</h1>
               {player.position && (
                 <Badge
                   variant="outline"
                   className={`border-0 ${
-                    POSITION_BADGE_COLORS[player.position] ??
-                    "bg-gray-100 text-gray-800"
+                    POSITION_BADGE_COLORS[player.position] ?? "bg-gray-100 text-gray-800"
                   }`}
                 >
                   {player.position}
@@ -152,25 +145,15 @@ export default async function PlayerDetailPage({ params }: Props) {
             </div>
 
             {player.name_en && (
-              <p className="mb-3 text-sm text-muted-foreground">
-                {player.name_en}
-              </p>
+              <p className="mb-3 text-sm text-muted-foreground">{player.name_en}</p>
             )}
 
             {/* 身体情報と出身地 */}
             <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
-              {player.height && (
-                <span>身長: {player.height}cm</span>
-              )}
-              {player.weight && (
-                <span>体重: {player.weight}kg</span>
-              )}
-              {player.birthplace && (
-                <span>出身: {player.birthplace}</span>
-              )}
-              {player.birthdate && (
-                <span>生年月日: {player.birthdate}</span>
-              )}
+              {player.height && <span>身長: {player.height}cm</span>}
+              {player.weight && <span>体重: {player.weight}kg</span>}
+              {player.birthplace && <span>出身: {player.birthplace}</span>}
+              {player.birthdate && <span>生年月日: {player.birthdate}</span>}
             </div>
           </div>
         </div>
@@ -189,7 +172,10 @@ export default async function PlayerDetailPage({ params }: Props) {
            * アクセントカラーとフェードインアニメーション付き
            * ================================================ */}
           <section>
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="star" size={20} className="text-primary" />Season Average</h2>
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+              <Icon name="star" size={20} className="text-primary" />
+              Season Average
+            </h2>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <SeasonAverageCard
                 label="PPG"
@@ -228,11 +214,17 @@ export default async function PlayerDetailPage({ params }: Props) {
            * ================================================ */}
           <section className="grid gap-4 md:grid-cols-2">
             <div className="rounded-xl border border-border bg-card p-6">
-              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="radar" size={20} className="text-primary" />選手能力</h2>
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+                <Icon name="radar" size={20} className="text-primary" />
+                選手能力
+              </h2>
               <PlayerAbilityRadar data={radarData} />
             </div>
             <div className="rounded-xl border border-border bg-card p-6">
-              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="show_chart" size={20} className="text-primary" />直近試合の得点推移</h2>
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+                <Icon name="show_chart" size={20} className="text-primary" />
+                直近試合の得点推移
+              </h2>
               {gameLogData.length > 0 ? (
                 <PlayerGameLogChart data={gameLogData} averagePts={average.ppg} />
               ) : (
@@ -248,7 +240,10 @@ export default async function PlayerDetailPage({ params }: Props) {
            * FG%, 3P%, FT%を水平プログレスバーで表示
            * ================================================ */}
           <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="gps_fixed" size={20} className="text-primary" />Shooting Split</h2>
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+              <Icon name="gps_fixed" size={20} className="text-primary" />
+              Shooting Split
+            </h2>
             <div className="space-y-4">
               <ShootingBar label="FG%" value={average.fg_pct} />
               <ShootingBar label="3P%" value={average.tp_pct} />
@@ -261,7 +256,10 @@ export default async function PlayerDetailPage({ params }: Props) {
            * 試合数、MPG、SPG、BPG、TOPG、EFFを一覧表示
            * ================================================ */}
           <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="analytics" size={20} className="text-primary" />Stats Summary</h2>
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+              <Icon name="analytics" size={20} className="text-primary" />
+              Stats Summary
+            </h2>
             <Separator className="mb-4" />
             <div className="grid grid-cols-3 gap-4 md:grid-cols-6">
               <StatsSummaryItem label="試合数" value={String(average.games_played)} />
@@ -308,9 +306,7 @@ function SeasonAverageCard({
       className={`rounded-xl border border-border bg-card p-4 text-center ${accentClass ?? ""} ${animationClass ?? ""}`}
     >
       <p className="text-xs text-muted-foreground">{sublabel}</p>
-      <p className="font-display text-3xl leading-tight text-[#006d3b]">
-        {value}
-      </p>
+      <p className="font-display text-3xl leading-tight text-[#006d3b]">{value}</p>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
     </div>
   );

@@ -113,9 +113,7 @@ describe("getH2HRecords", () => {
     });
 
     // モックデータ中に0勝0敗のレコードが存在することを前提に、除外されていることを確認
-    const zeroRecords = mockH2HRecords.filter(
-      (r) => r.wins + r.losses === 0
-    );
+    const zeroRecords = mockH2HRecords.filter((r) => r.wins + r.losses === 0);
     expect(h2h.length).toBe(mockH2HRecords.length - zeroRecords.length);
   });
 

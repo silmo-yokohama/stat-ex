@@ -32,9 +32,7 @@ export function Header() {
     <>
       <header
         className={`sticky top-0 border-b backdrop-blur-sm transition-colors duration-300 ${
-          isMenuOpen
-            ? "z-110 border-transparent bg-transparent"
-            : "z-50 border-border bg-white/95"
+          isMenuOpen ? "z-110 border-transparent bg-transparent" : "z-50 border-border bg-white/95"
         }`}
       >
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
@@ -45,12 +43,8 @@ export function Header() {
                 isMenuOpen ? "text-white" : ""
               }`}
             >
-              <span className={isMenuOpen ? "text-white" : "text-foreground"}>
-                STAT
-              </span>
-              <span className={isMenuOpen ? "text-white/70" : "text-primary"}>
-                -EX
-              </span>
+              <span className={isMenuOpen ? "text-white" : "text-foreground"}>STAT</span>
+              <span className={isMenuOpen ? "text-white/70" : "text-primary"}>-EX</span>
             </span>
             <span
               className={`hidden text-[10px] font-medium tracking-widest uppercase sm:inline transition-colors duration-300 ${
@@ -65,9 +59,7 @@ export function Header() {
           <nav className="hidden items-center gap-1 md:flex">
             {NAV_ITEMS.map((item) => {
               const isActive =
-                item.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(item.href);
+                item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
 
               return (
                 <Link
@@ -109,9 +101,7 @@ export function Header() {
             {/* 上の線: 開くと下にずれて45度回転 */}
             <span
               className={`block h-[2px] w-6 transition-all duration-300 ease-out ${
-                isMenuOpen
-                  ? "translate-y-[7px] rotate-45 bg-white"
-                  : "bg-foreground"
+                isMenuOpen ? "translate-y-[7px] rotate-45 bg-white" : "bg-foreground"
               }`}
             />
             {/* 中央の線: 開くと消える */}
@@ -123,9 +113,7 @@ export function Header() {
             {/* 下の線: 開くと上にずれて-45度回転 */}
             <span
               className={`block h-[2px] w-6 transition-all duration-300 ease-out ${
-                isMenuOpen
-                  ? "-translate-y-[7px] -rotate-45 bg-white"
-                  : "bg-foreground"
+                isMenuOpen ? "-translate-y-[7px] -rotate-45 bg-white" : "bg-foreground"
               }`}
             />
           </button>
@@ -146,8 +134,7 @@ export function Header() {
           isMenuOpen ? "pointer-events-auto" : "pointer-events-none"
         }`}
         style={{
-          background:
-            "linear-gradient(160deg, #003d22 0%, #006d3b 40%, #00a85a 100%)",
+          background: "linear-gradient(160deg, #003d22 0%, #006d3b 40%, #00a85a 100%)",
           transform: isMenuOpen ? "translateY(0)" : "translateY(100%)",
           transition: "transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)",
           willChange: "transform",
@@ -159,9 +146,7 @@ export function Header() {
           <nav className="flex flex-1 flex-col justify-center gap-2">
             {NAV_ITEMS.map((item, index) => {
               const isActive =
-                item.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(item.href);
+                item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
 
               return (
                 <Link
@@ -175,9 +160,7 @@ export function Header() {
                   }`}
                   style={{
                     opacity: isMenuOpen ? 1 : 0,
-                    transform: isMenuOpen
-                      ? "translateX(0)"
-                      : "translateX(-24px)",
+                    transform: isMenuOpen ? "translateX(0)" : "translateX(-24px)",
                     transition: isMenuOpen
                       ? `opacity 0.4s ease-out ${0.1 + index * 0.05}s, transform 0.4s ease-out ${0.1 + index * 0.05}s`
                       : "none",

@@ -104,12 +104,7 @@ type LiveScoreboardProps = {
  *
  * 試合中にマウントされ、30秒間隔でB.LEAGUEからリアルタイムデータを取得する。
  */
-export function LiveScoreboard({
-  scheduleKey,
-  homeName,
-  awayName,
-  isExHome,
-}: LiveScoreboardProps) {
+export function LiveScoreboard({ scheduleKey, homeName, awayName, isExHome }: LiveScoreboardProps) {
   const [data, setData] = useState<LiveResponse | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -127,17 +122,14 @@ export function LiveScoreboard({
       const response = await fetch(`/api/live/${scheduleKey}`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(
-          errorData?.error ?? `取得エラー: HTTP ${response.status}`
-        );
+        throw new Error(errorData?.error ?? `取得エラー: HTTP ${response.status}`);
       }
 
       const result: LiveResponse = await response.json();
       setData(result);
       setLastUpdated(new Date());
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "データの取得に失敗しました";
+      const message = err instanceof Error ? err.message : "データの取得に失敗しました";
       setError(message);
     } finally {
       setIsLoading(false);
@@ -205,37 +197,19 @@ export function LiveScoreboard({
     return (
       <div className="flex items-center justify-center rounded-xl border border-border bg-card p-12">
         <div className="text-center">
-          <Icon
-            name="sync"
-            size={32}
-            className="mx-auto mb-2 animate-spin text-primary"
-          />
-          <p className="text-sm text-muted-foreground">
-            ライブデータを取得中...
-          </p>
+          <Icon name="sync" size={32} className="mx-auto mb-2 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">ライブデータを取得中...</p>
         </div>
       </div>
     );
   }
 
   // 横浜EX側のスコア（勝敗判定用）
-  const exScore = data
-    ? isExHome
-      ? data.game.score_home
-      : data.game.score_away
-    : null;
-  const oppScore = data
-    ? isExHome
-      ? data.game.score_away
-      : data.game.score_home
-    : null;
+  const exScore = data ? (isExHome ? data.game.score_home : data.game.score_away) : null;
+  const oppScore = data ? (isExHome ? data.game.score_away : data.game.score_home) : null;
 
   // 横浜EX側のボックススコア
-  const exBoxScores = data
-    ? isExHome
-      ? data.home_box_scores
-      : data.away_box_scores
-    : [];
+  const exBoxScores = data ? (isExHome ? data.home_box_scores : data.away_box_scores) : [];
 
   return (
     <div className="space-y-6">
@@ -254,11 +228,7 @@ export function LiveScoreboard({
           disabled={isLoading}
           className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
         >
-          <Icon
-            name="refresh"
-            size={14}
-            className={isLoading ? "animate-spin" : ""}
-          />
+          <Icon name="refresh" size={14} className={isLoading ? "animate-spin" : ""} />
           更新
         </button>
       </div>
@@ -283,9 +253,7 @@ export function LiveScoreboard({
       )}
 
       {/* 横浜EX ボックススコアテーブル */}
-      {exBoxScores.length > 0 && (
-        <LiveBoxScoreTable boxScores={exBoxScores} />
-      )}
+      {exBoxScores.length > 0 && <LiveBoxScoreTable boxScores={exBoxScores} />}
     </div>
   );
 }
@@ -313,8 +281,7 @@ function LiveScoreboardCard({
   oppScore: number | null;
 }) {
   // 試合中は勝敗グラデーションなし
-  const isLeading =
-    exScore !== null && oppScore !== null && exScore > oppScore;
+  const isLeading = exScore !== null && oppScore !== null && exScore > oppScore;
 
   const containerClass = isLeading
     ? "rounded-xl border border-border overflow-hidden section-gradient p-6"
@@ -342,18 +309,14 @@ function LiveScoreboardCard({
             <span className="font-display text-6xl leading-none text-foreground">
               {game.score_home}
             </span>
-            <span className="font-display text-4xl text-muted-foreground">
-              -
-            </span>
+            <span className="font-display text-4xl text-muted-foreground">-</span>
             <span className="font-display text-6xl leading-none text-foreground">
               {game.score_away}
             </span>
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <span className="font-display text-5xl text-muted-foreground">
-              vs
-            </span>
+            <span className="font-display text-5xl text-muted-foreground">vs</span>
           </div>
         )}
 
@@ -384,9 +347,7 @@ function LiveScoreboardCard({
             </thead>
             <tbody>
               <tr className="border-b border-border">
-                <td className="py-1.5 text-xs font-medium text-foreground">
-                  {homeName}
-                </td>
+                <td className="py-1.5 text-xs font-medium text-foreground">{homeName}</td>
                 {quarterScores.map((q) => (
                   <td
                     key={`home-${q.label}`}
@@ -401,9 +362,7 @@ function LiveScoreboardCard({
                 ))}
               </tr>
               <tr>
-                <td className="py-1.5 text-xs font-medium text-foreground">
-                  {awayName}
-                </td>
+                <td className="py-1.5 text-xs font-medium text-foreground">{awayName}</td>
                 {quarterScores.map((q) => (
                   <td
                     key={`away-${q.label}`}
@@ -431,11 +390,7 @@ function LiveScoreboardCard({
  * リアルタイム取得した選手別スタッツを表示する。
  * DB版と同じハイライトロジック（得点上位3名、EFF上位3名、+/-色分け）を適用。
  */
-function LiveBoxScoreTable({
-  boxScores,
-}: {
-  boxScores: LiveBoxScore[];
-}) {
+function LiveBoxScoreTable({ boxScores }: { boxScores: LiveBoxScore[] }) {
   if (boxScores.length === 0) return null;
 
   // スターターを先頭に表示
@@ -464,9 +419,7 @@ function LiveBoxScoreTable({
       <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
         <Icon name="table_chart" size={20} className="text-primary" />
         ボックススコア
-        <Badge className="live-pulse bg-red-600 text-white text-[10px]">
-          LIVE
-        </Badge>
+        <Badge className="live-pulse bg-red-600 text-white text-[10px]">LIVE</Badge>
       </h2>
       <div className="overflow-x-auto">
         <Table>
@@ -492,25 +445,16 @@ function LiveBoxScoreTable({
           <TableBody>
             {sorted.map((bs, index) => {
               const rowClass = bs.is_starter ? "font-semibold" : "";
-              const isFirstBench =
-                !bs.is_starter &&
-                index > 0 &&
-                sorted[index - 1].is_starter;
+              const isFirstBench = !bs.is_starter && index > 0 && sorted[index - 1].is_starter;
 
               const isPtsTop = ptsTop3.has(bs.player_id);
               const ptsHighlight = isPtsTop ? "bg-[#e8f5ee]" : "";
 
               const isEffTop = effTop3.has(bs.player_id);
-              const effHighlight = isEffTop
-                ? "text-[#006d3b] font-bold"
-                : "";
+              const effHighlight = isEffTop ? "text-[#006d3b] font-bold" : "";
 
               const plusMinusColor =
-                bs.plus_minus > 0
-                  ? "text-[#006d3b]"
-                  : bs.plus_minus < 0
-                    ? "text-[#ef4444]"
-                    : "";
+                bs.plus_minus > 0 ? "text-[#006d3b]" : bs.plus_minus < 0 ? "text-[#ef4444]" : "";
 
               return (
                 <TableRow
@@ -520,15 +464,9 @@ function LiveBoxScoreTable({
                   <TableCell className={`text-center ${rowClass}`}>
                     {bs.player_number || "-"}
                   </TableCell>
-                  <TableCell className={rowClass}>
-                    {bs.player_name}
-                  </TableCell>
-                  <TableCell className={`text-center ${rowClass}`}>
-                    {bs.minutes || "-"}
-                  </TableCell>
-                  <TableCell
-                    className={`text-center ${rowClass} ${ptsHighlight}`}
-                  >
+                  <TableCell className={rowClass}>{bs.player_name}</TableCell>
+                  <TableCell className={`text-center ${rowClass}`}>{bs.minutes || "-"}</TableCell>
+                  <TableCell className={`text-center ${rowClass} ${ptsHighlight}`}>
                     {bs.pts}
                   </TableCell>
                   <TableCell className={`text-center ${rowClass}`}>
@@ -540,35 +478,17 @@ function LiveBoxScoreTable({
                   <TableCell className={`text-center ${rowClass}`}>
                     {bs.ft_pct !== null ? `${bs.ft_pct}%` : "-"}
                   </TableCell>
-                  <TableCell className={`text-center ${rowClass}`}>
-                    {bs.reb}
-                  </TableCell>
-                  <TableCell className={`text-center ${rowClass}`}>
-                    {bs.ast}
-                  </TableCell>
-                  <TableCell className={`text-center ${rowClass}`}>
-                    {bs.tov}
-                  </TableCell>
-                  <TableCell className={`text-center ${rowClass}`}>
-                    {bs.stl}
-                  </TableCell>
-                  <TableCell className={`text-center ${rowClass}`}>
-                    {bs.blk}
-                  </TableCell>
-                  <TableCell className={`text-center ${rowClass}`}>
-                    {bs.fouls}
-                  </TableCell>
-                  <TableCell
-                    className={`text-center ${rowClass} ${effHighlight}`}
-                  >
+                  <TableCell className={`text-center ${rowClass}`}>{bs.reb}</TableCell>
+                  <TableCell className={`text-center ${rowClass}`}>{bs.ast}</TableCell>
+                  <TableCell className={`text-center ${rowClass}`}>{bs.tov}</TableCell>
+                  <TableCell className={`text-center ${rowClass}`}>{bs.stl}</TableCell>
+                  <TableCell className={`text-center ${rowClass}`}>{bs.blk}</TableCell>
+                  <TableCell className={`text-center ${rowClass}`}>{bs.fouls}</TableCell>
+                  <TableCell className={`text-center ${rowClass} ${effHighlight}`}>
                     {bs.eff}
                   </TableCell>
-                  <TableCell
-                    className={`text-center ${rowClass} ${plusMinusColor}`}
-                  >
-                    {bs.plus_minus > 0
-                      ? `+${bs.plus_minus}`
-                      : bs.plus_minus}
+                  <TableCell className={`text-center ${rowClass} ${plusMinusColor}`}>
+                    {bs.plus_minus > 0 ? `+${bs.plus_minus}` : bs.plus_minus}
                   </TableCell>
                 </TableRow>
               );

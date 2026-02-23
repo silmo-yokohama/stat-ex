@@ -17,10 +17,7 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import {
-  GameQuarterChart,
-  GameScoreFlowChart,
-} from "@/components/games/GameCharts";
+import { GameQuarterChart, GameScoreFlowChart } from "@/components/games/GameCharts";
 import { LiveScoreboard } from "@/components/games/LiveScoreboard";
 
 /**
@@ -61,10 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // スコアがある場合はタイトルに含める
   const exScore = getExScore(game);
   const oppScore = getOppScore(game);
-  const scoreText =
-    exScore !== null && oppScore !== null
-      ? ` ${exScore}-${oppScore}`
-      : "";
+  const scoreText = exScore !== null && oppScore !== null ? ` ${exScore}-${oppScore}` : "";
 
   return {
     title: `vs ${game.opponent.short_name}${scoreText} - ${game.game_date}`,
@@ -253,10 +247,7 @@ function buildPlayByPlayData(
 /**
  * ボックススコアから得点上位3名のIDセットを取得する
  */
-function getTopIds(
-  boxScores: (BoxScore & { player: Player })[],
-  key: "pts" | "eff"
-): Set<string> {
+function getTopIds(boxScores: (BoxScore & { player: Player })[], key: "pts" | "eff"): Set<string> {
   return new Set(
     [...boxScores]
       .sort((a, b) => b[key] - a[key])
@@ -296,20 +287,10 @@ function Scoreboard({
     <div className={containerClass}>
       {/* ステータスバッジ */}
       <div className="mb-4 flex items-center justify-center gap-2">
-        <span className="text-sm text-muted-foreground">
-          {formatFullDate(game.game_date)}
-        </span>
-        {game.status === "FINAL" && (
-          <Badge variant="secondary">FINAL</Badge>
-        )}
-        {game.status === "LIVE" && (
-          <Badge className="live-pulse bg-red-600 text-white">LIVE</Badge>
-        )}
-        {game.status === "SCHEDULED" && (
-          <Badge variant="outline">
-            {game.game_time ?? "TBD"}
-          </Badge>
-        )}
+        <span className="text-sm text-muted-foreground">{formatFullDate(game.game_date)}</span>
+        {game.status === "FINAL" && <Badge variant="secondary">FINAL</Badge>}
+        {game.status === "LIVE" && <Badge className="live-pulse bg-red-600 text-white">LIVE</Badge>}
+        {game.status === "SCHEDULED" && <Badge variant="outline">{game.game_time ?? "TBD"}</Badge>}
       </div>
 
       {/* メインスコア */}
@@ -353,9 +334,7 @@ function Scoreboard({
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <span className="font-display text-5xl text-muted-foreground">
-              vs
-            </span>
+            <span className="font-display text-5xl text-muted-foreground">vs</span>
           </div>
         )}
 
@@ -388,9 +367,7 @@ function Scoreboard({
             <tbody>
               {/* ホーム行 */}
               <tr className="border-b border-border">
-                <td className="py-1.5 text-xs font-medium text-foreground">
-                  {homeName}
-                </td>
+                <td className="py-1.5 text-xs font-medium text-foreground">{homeName}</td>
                 {quarterScores.map((q) => (
                   <td
                     key={`home-${q.label}`}
@@ -406,9 +383,7 @@ function Scoreboard({
               </tr>
               {/* アウェイ行 */}
               <tr>
-                <td className="py-1.5 text-xs font-medium text-foreground">
-                  {awayName}
-                </td>
+                <td className="py-1.5 text-xs font-medium text-foreground">{awayName}</td>
                 {quarterScores.map((q) => (
                   <td
                     key={`away-${q.label}`}
@@ -439,11 +414,7 @@ function Scoreboard({
  * - EFF上位3名はテキストをグリーン太字で強調
  * - +/-がプラスならグリーン、マイナスなら赤で色分け
  */
-function BoxScoreTable({
-  boxScores,
-}: {
-  boxScores: (BoxScore & { player: Player })[];
-}) {
+function BoxScoreTable({ boxScores }: { boxScores: (BoxScore & { player: Player })[] }) {
   if (boxScores.length === 0) return null;
 
   // スターターを先頭に表示
@@ -487,10 +458,7 @@ function BoxScoreTable({
           {sorted.map((bs, index) => {
             const rowClass = bs.is_starter ? "font-semibold" : "";
             // スターターとベンチの境界にセパレータを挿入するためのフラグ
-            const isFirstBench =
-              !bs.is_starter &&
-              index > 0 &&
-              sorted[index - 1].is_starter;
+            const isFirstBench = !bs.is_starter && index > 0 && sorted[index - 1].is_starter;
 
             // 得点上位3名はセル背景をハイライト
             const isPtsTop = ptsTop3.has(bs.id);
@@ -498,17 +466,11 @@ function BoxScoreTable({
 
             // EFF上位3名はテキストをグリーン太字で強調
             const isEffTop = effTop3.has(bs.id);
-            const effHighlight = isEffTop
-              ? "text-[#006d3b] font-bold"
-              : "";
+            const effHighlight = isEffTop ? "text-[#006d3b] font-bold" : "";
 
             // +/-の色分け: プラスはグリーン、マイナスは赤
             const plusMinusColor =
-              bs.plus_minus > 0
-                ? "text-[#006d3b]"
-                : bs.plus_minus < 0
-                  ? "text-[#ef4444]"
-                  : "";
+              bs.plus_minus > 0 ? "text-[#006d3b]" : bs.plus_minus < 0 ? "text-[#ef4444]" : "";
 
             return (
               <TableRow
@@ -518,16 +480,10 @@ function BoxScoreTable({
                 <TableCell className={`text-center ${rowClass}`}>
                   {bs.player.number ?? "-"}
                 </TableCell>
-                <TableCell className={rowClass}>
-                  {bs.player.name}
-                </TableCell>
-                <TableCell className={`text-center ${rowClass}`}>
-                  {bs.minutes ?? "-"}
-                </TableCell>
+                <TableCell className={rowClass}>{bs.player.name}</TableCell>
+                <TableCell className={`text-center ${rowClass}`}>{bs.minutes ?? "-"}</TableCell>
                 {/* 得点: 上位3名はセル背景ハイライト */}
-                <TableCell
-                  className={`text-center ${rowClass} ${ptsHighlight}`}
-                >
+                <TableCell className={`text-center ${rowClass} ${ptsHighlight}`}>
                   {bs.pts}
                 </TableCell>
                 <TableCell className={`text-center ${rowClass}`}>
@@ -539,34 +495,18 @@ function BoxScoreTable({
                 <TableCell className={`text-center ${rowClass}`}>
                   {bs.ft_pct !== null ? `${bs.ft_pct}%` : "-"}
                 </TableCell>
-                <TableCell className={`text-center ${rowClass}`}>
-                  {bs.reb}
-                </TableCell>
-                <TableCell className={`text-center ${rowClass}`}>
-                  {bs.ast}
-                </TableCell>
-                <TableCell className={`text-center ${rowClass}`}>
-                  {bs.tov}
-                </TableCell>
-                <TableCell className={`text-center ${rowClass}`}>
-                  {bs.stl}
-                </TableCell>
-                <TableCell className={`text-center ${rowClass}`}>
-                  {bs.blk}
-                </TableCell>
-                <TableCell className={`text-center ${rowClass}`}>
-                  {bs.fouls}
-                </TableCell>
+                <TableCell className={`text-center ${rowClass}`}>{bs.reb}</TableCell>
+                <TableCell className={`text-center ${rowClass}`}>{bs.ast}</TableCell>
+                <TableCell className={`text-center ${rowClass}`}>{bs.tov}</TableCell>
+                <TableCell className={`text-center ${rowClass}`}>{bs.stl}</TableCell>
+                <TableCell className={`text-center ${rowClass}`}>{bs.blk}</TableCell>
+                <TableCell className={`text-center ${rowClass}`}>{bs.fouls}</TableCell>
                 {/* EFF: 上位3名はグリーン太字で強調 */}
-                <TableCell
-                  className={`text-center ${rowClass} ${effHighlight}`}
-                >
+                <TableCell className={`text-center ${rowClass} ${effHighlight}`}>
                   {bs.eff}
                 </TableCell>
                 {/* +/-: プラスはグリーン、マイナスは赤 */}
-                <TableCell
-                  className={`text-center ${rowClass} ${plusMinusColor}`}
-                >
+                <TableCell className={`text-center ${rowClass} ${plusMinusColor}`}>
                   {bs.plus_minus > 0 ? `+${bs.plus_minus}` : bs.plus_minus}
                 </TableCell>
               </TableRow>
@@ -603,11 +543,7 @@ function AICommentary({ content }: { content: string }) {
  *
  * 会場・観客数・審判の情報を表示する。
  */
-function GameInfo({
-  game,
-}: {
-  game: GameDetail;
-}) {
+function GameInfo({ game }: { game: GameDetail }) {
   // 表示する情報がない場合はレンダリングしない
   if (!game.venue && !game.attendance && !game.referee) return null;
 
@@ -648,9 +584,7 @@ function GameInfo({
             <Icon name="gavel" size={16} className="mt-0.5 shrink-0 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">審判</p>
-              <p className="text-sm font-medium text-foreground">
-                {game.referee}
-              </p>
+              <p className="text-sm font-medium text-foreground">{game.referee}</p>
             </div>
           </div>
         )}
@@ -674,10 +608,8 @@ export default async function GameDetailPage({ params }: Props) {
 
   // ホームチーム名・アウェイチーム名をページレベルで算出
   // （Scoreboard・チャートなど複数コンポーネントで共有するため）
-  const homeName =
-    game.home_away === "HOME" ? TEAM.shortName : game.opponent.short_name;
-  const awayName =
-    game.home_away === "HOME" ? game.opponent.short_name : TEAM.shortName;
+  const homeName = game.home_away === "HOME" ? TEAM.shortName : game.opponent.short_name;
+  const awayName = game.home_away === "HOME" ? game.opponent.short_name : TEAM.shortName;
 
   // チャート用データの事前計算
   const quarterChartData = buildQuarterChartData(game);

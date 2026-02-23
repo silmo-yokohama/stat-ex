@@ -86,10 +86,10 @@ body {
 /* Google Material Symbols アイコンの基本スタイル */
 .material-symbols-outlined {
   font-variation-settings:
-    'FILL' 0,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
   vertical-align: middle;
   user-select: none;
 }
@@ -106,8 +106,13 @@ body {
 
 /* LIVEバッジのパルスアニメーション */
 @keyframes live-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .live-pulse {
@@ -150,12 +155,24 @@ body {
  * カード種類ごとに色を変えて視覚的区別
  * ======================================== */
 
-.stat-card-green { border-top: 3px solid #006d3b; }
-.stat-card-emerald { border-top: 3px solid #059669; }
-.stat-card-teal { border-top: 3px solid #0d9488; }
-.stat-card-indigo { border-top: 3px solid #6366f1; }
-.stat-card-amber { border-top: 3px solid #f59e0b; }
-.stat-card-rose { border-top: 3px solid #f43f5e; }
+.stat-card-green {
+  border-top: 3px solid #006d3b;
+}
+.stat-card-emerald {
+  border-top: 3px solid #059669;
+}
+.stat-card-teal {
+  border-top: 3px solid #0d9488;
+}
+.stat-card-indigo {
+  border-top: 3px solid #6366f1;
+}
+.stat-card-amber {
+  border-top: 3px solid #f59e0b;
+}
+.stat-card-rose {
+  border-top: 3px solid #f43f5e;
+}
 
 /* ========================================
  * アニメーション
@@ -178,16 +195,30 @@ body {
 }
 
 /* スタガードディレイ（カードを順番に表示） */
-.delay-1 { animation-delay: 0.05s; }
-.delay-2 { animation-delay: 0.1s; }
-.delay-3 { animation-delay: 0.15s; }
-.delay-4 { animation-delay: 0.2s; }
-.delay-5 { animation-delay: 0.25s; }
-.delay-6 { animation-delay: 0.3s; }
+.delay-1 {
+  animation-delay: 0.05s;
+}
+.delay-2 {
+  animation-delay: 0.1s;
+}
+.delay-3 {
+  animation-delay: 0.15s;
+}
+.delay-4 {
+  animation-delay: 0.2s;
+}
+.delay-5 {
+  animation-delay: 0.25s;
+}
+.delay-6 {
+  animation-delay: 0.3s;
+}
 
 /* プログレスバーの伸長アニメーション */
 @keyframes grow-width {
-  from { width: 0%; }
+  from {
+    width: 0%;
+  }
 }
 
 .animate-grow-width {
@@ -196,9 +227,17 @@ body {
 
 /* 数字のカウントアップ風パルス */
 @keyframes number-pop {
-  0% { transform: scale(0.8); opacity: 0; }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .animate-number-pop {

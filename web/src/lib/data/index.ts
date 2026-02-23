@@ -5,20 +5,9 @@
  * フロントエンドのコンポーネントはこのモジュール経由でデータを取得する。
  */
 
-export {
-  getLatestGame,
-  getNextGame,
-  getGames,
-  getGameByScheduleKey,
-  getGameDetail,
-} from "./games";
+export { getLatestGame, getNextGame, getGames, getGameByScheduleKey, getGameDetail } from "./games";
 
-export {
-  getPlayers,
-  getPlayerById,
-  getPlayerAverage,
-  getPlayerGameLog,
-} from "./players";
+export { getPlayers, getPlayerById, getPlayerAverage, getPlayerGameLog } from "./players";
 
 export {
   getTeamStats,
@@ -30,8 +19,4 @@ export {
   getQuarterTrend,
 } from "./team";
 
-export {
-  getNews,
-  getVideos,
-  getMascot,
-} from "./content";
+export { getNews, getVideos, getMascot } from "./content";

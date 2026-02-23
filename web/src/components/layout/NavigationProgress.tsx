@@ -13,9 +13,7 @@ import { usePathname } from "next/navigation";
  */
 export function NavigationProgress() {
   const pathname = usePathname();
-  const [state, setState] = useState<"idle" | "loading" | "completing">(
-    "idle"
-  );
+  const [state, setState] = useState<"idle" | "loading" | "completing">("idle");
   const [progress, setProgress] = useState(0);
 
   const prevPathRef = useRef(pathname);

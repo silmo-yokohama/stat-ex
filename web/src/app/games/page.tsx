@@ -67,15 +67,16 @@ function toSeasonRecordData(games: GameWithOpponent[]): SeasonRecordData[] {
 function SeasonSummaryCards({ teamStats }: { teamStats: TeamStats }) {
   /** 勝率を小数点3桁のフォーマットに変換する */
   const winPctDisplay =
-    teamStats.win_pct !== null
-      ? teamStats.win_pct.toFixed(3).replace(/^0/, "")
-      : "---";
+    teamStats.win_pct !== null ? teamStats.win_pct.toFixed(3).replace(/^0/, "") : "---";
 
   return (
     <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
       {/* 勝敗 */}
       <div className="stat-card-green rounded-xl border border-border bg-card p-4 text-center animate-fade-in-up delay-1">
-        <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground"><Icon name="scoreboard" size={14} />勝敗</p>
+        <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+          <Icon name="scoreboard" size={14} />
+          勝敗
+        </p>
         <p className="font-display text-3xl leading-tight text-foreground">
           {teamStats.wins}-{teamStats.losses}
         </p>
@@ -83,15 +84,19 @@ function SeasonSummaryCards({ teamStats }: { teamStats: TeamStats }) {
 
       {/* 勝率 */}
       <div className="stat-card-emerald rounded-xl border border-border bg-card p-4 text-center animate-fade-in-up delay-2">
-        <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground"><Icon name="percent" size={14} />勝率</p>
-        <p className="font-display text-3xl leading-tight text-foreground">
-          {winPctDisplay}
+        <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+          <Icon name="percent" size={14} />
+          勝率
         </p>
+        <p className="font-display text-3xl leading-tight text-foreground">{winPctDisplay}</p>
       </div>
 
       {/* ホーム成績 */}
       <div className="stat-card-teal rounded-xl border border-border bg-card p-4 text-center animate-fade-in-up delay-3">
-        <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground"><Icon name="home" size={14} />ホーム</p>
+        <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+          <Icon name="home" size={14} />
+          ホーム
+        </p>
         <p className="font-display text-3xl leading-tight text-foreground">
           {teamStats.home_wins}-{teamStats.home_losses}
         </p>
@@ -99,7 +104,10 @@ function SeasonSummaryCards({ teamStats }: { teamStats: TeamStats }) {
 
       {/* アウェイ成績 */}
       <div className="stat-card-indigo rounded-xl border border-border bg-card p-4 text-center animate-fade-in-up delay-4">
-        <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground"><Icon name="flight" size={14} />アウェイ</p>
+        <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+          <Icon name="flight" size={14} />
+          アウェイ
+        </p>
         <p className="font-display text-3xl leading-tight text-foreground">
           {teamStats.away_wins}-{teamStats.away_losses}
         </p>
@@ -131,9 +139,7 @@ function FinishedGameCard({ game }: { game: GameWithOpponent }) {
       >
         {/* 日付 + バッジ行 */}
         <div className="mb-3 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            {formatGameDate(game.game_date)}
-          </span>
+          <span className="text-xs text-muted-foreground">{formatGameDate(game.game_date)}</span>
           <div className="flex items-center gap-1.5">
             <Badge variant="outline" className="text-[10px]">
               {game.home_away}
@@ -151,9 +157,7 @@ function FinishedGameCard({ game }: { game: GameWithOpponent }) {
         </div>
 
         {/* 対戦相手名 */}
-        <p className="text-sm font-semibold text-foreground">
-          vs {game.opponent.name}
-        </p>
+        <p className="text-sm font-semibold text-foreground">vs {game.opponent.name}</p>
 
         {/* スコア（勝利時は自チームスコアをグリーンで強調） */}
         {exScore !== null && oppScore !== null && (
@@ -199,24 +203,18 @@ function ScheduledGameCard({ game }: { game: GameWithOpponent }) {
       <div className="rounded-xl border border-dashed border-border bg-card p-4 transition-shadow hover:shadow-md">
         {/* 日付 + バッジ行 */}
         <div className="mb-3 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            {formatGameDate(game.game_date)}
-          </span>
+          <span className="text-xs text-muted-foreground">{formatGameDate(game.game_date)}</span>
           <Badge variant="outline" className="text-[10px]">
             {game.home_away}
           </Badge>
         </div>
 
         {/* 対戦相手名 */}
-        <p className="text-sm font-semibold text-foreground">
-          vs {game.opponent.name}
-        </p>
+        <p className="text-sm font-semibold text-foreground">vs {game.opponent.name}</p>
 
         {/* vs + 時刻 */}
         <div className="mt-2 flex items-baseline gap-2">
-          <span className="font-display text-3xl leading-none text-muted-foreground">
-            vs
-          </span>
+          <span className="font-display text-3xl leading-none text-muted-foreground">vs</span>
           {game.game_time && (
             <span className="text-sm text-muted-foreground">
               <Icon name="calendar_today" size={12} />
@@ -277,7 +275,8 @@ export default async function GamesPage() {
       {/* シーズン戦績チャート（旧ストリークバーの代替） */}
       <section className="rounded-xl border border-border bg-card p-4">
         <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-          <Icon name="timeline" size={16} />シーズン戦績
+          <Icon name="timeline" size={16} />
+          シーズン戦績
         </h2>
         <SeasonRecordChart data={seasonRecordData} />
       </section>
@@ -325,9 +324,7 @@ export default async function GamesPage() {
       {/* データが空の場合 */}
       {games.length === 0 && (
         <div className="rounded-xl border border-border bg-card p-12 text-center">
-          <p className="text-muted-foreground">
-            試合データがありません
-          </p>
+          <p className="text-muted-foreground">試合データがありません</p>
         </div>
       )}
     </div>

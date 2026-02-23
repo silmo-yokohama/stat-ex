@@ -76,9 +76,7 @@ function PlayerRow({
         <p className="text-base font-semibold text-foreground group-hover:text-[#006d3b]">
           {player.name}
         </p>
-        {player.name_en && (
-          <p className="text-xs text-muted-foreground">{player.name_en}</p>
-        )}
+        {player.name_en && <p className="text-xs text-muted-foreground">{player.name_en}</p>}
         {/* モバイル: 身長・体重 */}
         <div className="mt-1 flex gap-3 text-xs text-muted-foreground sm:hidden">
           {player.height && <span>{player.height}cm</span>}
@@ -130,10 +128,7 @@ function StatItem({ label, value }: { label: string; value: number }) {
  */
 export default async function PlayersPage() {
   // 選手一覧と全選手の平均スタッツを並行取得
-  const [players, allAverages] = await Promise.all([
-    getPlayers(),
-    getAllPlayerAverages(),
-  ]);
+  const [players, allAverages] = await Promise.all([getPlayers(), getAllPlayerAverages()]);
 
   // 散布図用データ: 選手ごとのPPG・RPG・APG・ポジション情報
   const scatterData = allAverages.map((a) => ({
@@ -149,17 +144,16 @@ export default async function PlayersPage() {
       {/* ページタイトル */}
       <div>
         <h1 className="text-2xl font-bold">選手一覧</h1>
-        <p className="text-sm text-muted-foreground">
-          {players.length}名のロスター
-        </p>
+        <p className="text-sm text-muted-foreground">{players.length}名のロスター</p>
       </div>
 
       {/* スタッツ分布チャート */}
       <section className="rounded-xl border border-border bg-card p-6">
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="scatter_plot" size={20} className="text-primary" />スタッツ分布</h2>
-        <p className="mb-2 text-xs text-muted-foreground">
-          PPG vs RPG（バブルサイズ = APG）
-        </p>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+          <Icon name="scatter_plot" size={20} className="text-primary" />
+          スタッツ分布
+        </h2>
+        <p className="mb-2 text-xs text-muted-foreground">PPG vs RPG（バブルサイズ = APG）</p>
         <PlayersScatterChart data={scatterData} />
       </section>
 
@@ -167,12 +161,8 @@ export default async function PlayersPage() {
       <div className="space-y-3">
         {players.map((player) => {
           // 該当選手の平均スタッツを検索
-          const average = allAverages.find(
-            (a) => a.player_id === player.id
-          );
-          return (
-            <PlayerRow key={player.id} player={player} average={average} />
-          );
+          const average = allAverages.find((a) => a.player_id === player.id);
+          return <PlayerRow key={player.id} player={player} average={average} />;
         })}
       </div>
     </div>

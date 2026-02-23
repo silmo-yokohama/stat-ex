@@ -44,9 +44,7 @@ export const metadata: Metadata = {
  * @param games - 全試合データ（GameWithOpponent配列）
  * @returns 試合番号・累積勝利数・理想ペースの配列
  */
-function buildCumulativeWins(
-  games: Game[]
-): { game: number; wins: number; ideal: number }[] {
+function buildCumulativeWins(games: Game[]): { game: number; wins: number; ideal: number }[] {
   // 終了済み試合を日付昇順でソート
   const finished = games
     .filter((g) => g.status === "FINAL")
@@ -102,20 +100,14 @@ export default async function TeamPage() {
     .sort((a, b) => a.game_date.localeCompare(b.game_date))
     .map((g) => isWin(g) === true);
 
-  const pennantRaceData = buildPennantRaceData(
-    standings,
-    exGameResults,
-    TEAM.shortName,
-  );
+  const pennantRaceData = buildPennantRaceData(standings, exGameResults, TEAM.shortName);
 
   return (
     <div className="space-y-8">
       {/* ページタイトル */}
       <div>
         <h1 className="text-2xl font-bold">チーム成績</h1>
-        <p className="text-sm text-muted-foreground">
-          2025-26シーズン
-        </p>
+        <p className="text-sm text-muted-foreground">2025-26シーズン</p>
       </div>
 
       {/* ================================================
@@ -124,7 +116,10 @@ export default async function TeamPage() {
        * アクセントカラー付きのカードで視覚的に区別
        * ================================================ */}
       <section>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="analytics" size={20} className="text-primary" />Season Summary</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+          <Icon name="analytics" size={20} className="text-primary" />
+          Season Summary
+        </h2>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <SummaryCard
             label="W-L"
@@ -149,7 +144,9 @@ export default async function TeamPage() {
           />
           <SummaryCard
             label="PA"
-            value={teamStats.avg_points_against !== null ? teamStats.avg_points_against.toFixed(1) : "-"}
+            value={
+              teamStats.avg_points_against !== null ? teamStats.avg_points_against.toFixed(1) : "-"
+            }
             sublabel="平均失点"
             accentClass="stat-card-indigo"
             animationClass="animate-fade-in-up delay-4"
@@ -162,7 +159,10 @@ export default async function TeamPage() {
        * 勝敗カード2枚 + ドーナツチャート
        * ================================================ */}
       <section>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="compare_arrows" size={20} className="text-primary" />Home vs Away</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+          <Icon name="compare_arrows" size={20} className="text-primary" />
+          Home vs Away
+        </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* ホーム成績カード（薄いグリーングラデーション背景） */}
           <div className="section-gradient rounded-xl border border-border p-6">
@@ -177,8 +177,7 @@ export default async function TeamPage() {
               勝率{" "}
               {teamStats.home_wins + teamStats.home_losses > 0
                 ? (
-                    (teamStats.home_wins /
-                      (teamStats.home_wins + teamStats.home_losses)) *
+                    (teamStats.home_wins / (teamStats.home_wins + teamStats.home_losses)) *
                     100
                   ).toFixed(1)
                 : "0.0"}
@@ -199,8 +198,7 @@ export default async function TeamPage() {
               勝率{" "}
               {teamStats.away_wins + teamStats.away_losses > 0
                 ? (
-                    (teamStats.away_wins /
-                      (teamStats.away_wins + teamStats.away_losses)) *
+                    (teamStats.away_wins / (teamStats.away_wins + teamStats.away_losses)) *
                     100
                   ).toFixed(1)
                 : "0.0"}
@@ -225,7 +223,10 @@ export default async function TeamPage() {
        * 月ごとの勝敗を積み上げ棒グラフで表示
        * ================================================ */}
       <section>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="calendar_month" size={20} className="text-primary" />月別成績</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+          <Icon name="calendar_month" size={20} className="text-primary" />
+          月別成績
+        </h2>
         <TeamMonthlyChart data={monthlyRecord} />
       </section>
 
@@ -234,7 +235,10 @@ export default async function TeamPage() {
        * クォーターごとの平均得点・失点をレーダーチャートで表示
        * ================================================ */}
       <section>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="radar" size={20} className="text-primary" />Q別得点傾向</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+          <Icon name="radar" size={20} className="text-primary" />
+          Q別得点傾向
+        </h2>
         <TeamQuarterRadar data={quarterTrend} />
       </section>
 
@@ -243,7 +247,10 @@ export default async function TeamPage() {
        * 累積勝利数と理想ペース（勝率60%）の比較チャート
        * ================================================ */}
       <section>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="trending_up" size={20} className="text-primary" />シーズン推移</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+          <Icon name="trending_up" size={20} className="text-primary" />
+          シーズン推移
+        </h2>
         <TeamCumulativeWins data={cumulativeWinsData} />
       </section>
 
@@ -273,7 +280,10 @@ export default async function TeamPage() {
        * 勝敗差の大きい順にソート済み
        * ================================================ */}
       <section>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="swap_horiz" size={20} className="text-primary" />H2H 対戦成績</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+          <Icon name="swap_horiz" size={20} className="text-primary" />
+          H2H 対戦成績
+        </h2>
         <div className="rounded-xl border border-border bg-card">
           <Table>
             <TableHeader>
@@ -288,9 +298,7 @@ export default async function TeamPage() {
             <TableBody>
               {h2hRecords.map((record) => (
                 <TableRow key={record.id}>
-                  <TableCell className="font-medium">
-                    {record.opponent_name}
-                  </TableCell>
+                  <TableCell className="font-medium">{record.opponent_name}</TableCell>
                   <TableCell className="text-center text-[#006d3b] font-semibold">
                     {record.wins}
                   </TableCell>
@@ -298,9 +306,7 @@ export default async function TeamPage() {
                     {record.losses}
                   </TableCell>
                   <TableCell className="text-center">
-                    {record.avg_points_for !== null
-                      ? record.avg_points_for.toFixed(1)
-                      : "-"}
+                    {record.avg_points_for !== null ? record.avg_points_for.toFixed(1) : "-"}
                   </TableCell>
                   <TableCell className="text-center">
                     {record.avg_points_against !== null
@@ -319,7 +325,10 @@ export default async function TeamPage() {
        * ケガで離脱中の選手を一覧表示
        * ================================================ */}
       <section>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold"><Icon name="healing" size={20} className="text-primary" />Injury List</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+          <Icon name="healing" size={20} className="text-primary" />
+          Injury List
+        </h2>
         {injuries.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-6 text-center text-muted-foreground">
             <p>現在ケガ人はいません</p>
@@ -340,12 +349,8 @@ export default async function TeamPage() {
 
                 {/* 選手名と理由 */}
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-foreground">
-                    {injury.player_name}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {injury.reason}
-                  </p>
+                  <p className="font-semibold text-foreground">{injury.player_name}</p>
+                  <p className="text-sm text-muted-foreground">{injury.reason}</p>
                 </div>
 
                 {/* 登録日 */}
@@ -387,11 +392,11 @@ function SummaryCard({
   animationClass: string;
 }) {
   return (
-    <div className={`rounded-xl border border-border bg-card p-4 text-center ${accentClass} ${animationClass}`}>
+    <div
+      className={`rounded-xl border border-border bg-card p-4 text-center ${accentClass} ${animationClass}`}
+    >
       <p className="text-xs text-muted-foreground">{sublabel}</p>
-      <p className="font-display text-3xl leading-tight text-[#006d3b]">
-        {value}
-      </p>
+      <p className="font-display text-3xl leading-tight text-[#006d3b]">{value}</p>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
     </div>
   );

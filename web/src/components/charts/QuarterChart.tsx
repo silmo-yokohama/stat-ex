@@ -61,11 +61,7 @@ export function QuarterChart({ data, homeTeamName, awayTeamName }: Props) {
           axisLine={{ stroke: "#e2e4e6" }}
           tickLine={false}
         />
-        <YAxis
-          tick={{ fontSize: 11, fill: "#606060" }}
-          axisLine={false}
-          tickLine={false}
-        />
+        <YAxis tick={{ fontSize: 11, fill: "#606060" }} axisLine={false} tickLine={false} />
         <Tooltip
           contentStyle={tooltipStyle}
           formatter={(value: number | undefined, name: string | undefined) => [
@@ -74,25 +70,13 @@ export function QuarterChart({ data, homeTeamName, awayTeamName }: Props) {
           ]}
         />
         <Legend
-          formatter={(value: string) =>
-            value === "home" ? homeTeamName : awayTeamName
-          }
+          formatter={(value: string) => (value === "home" ? homeTeamName : awayTeamName)}
           wrapperStyle={{ fontSize: "12px" }}
         />
         {/* ホームチーム: チームカラー（ダークグリーン） */}
-        <Bar
-          dataKey="home"
-          fill="#006d3b"
-          radius={[4, 4, 0, 0]}
-          barSize={28}
-        />
+        <Bar dataKey="home" fill="#006d3b" radius={[4, 4, 0, 0]} barSize={28} />
         {/* アウェイチーム: グレー */}
-        <Bar
-          dataKey="away"
-          fill="#9CA3AF"
-          radius={[4, 4, 0, 0]}
-          barSize={28}
-        />
+        <Bar dataKey="away" fill="#9CA3AF" radius={[4, 4, 0, 0]} barSize={28} />
       </BarChart>
     </ResponsiveContainer>
   );

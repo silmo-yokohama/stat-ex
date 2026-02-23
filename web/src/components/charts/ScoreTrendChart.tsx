@@ -29,18 +29,12 @@ type Props = {
 };
 
 /** 勝敗に応じたマーカー */
-const CustomDot = (props: {
-  cx?: number;
-  cy?: number;
-  payload?: ScoreTrendData;
-}) => {
+const CustomDot = (props: { cx?: number; cy?: number; payload?: ScoreTrendData }) => {
   const { cx = 0, cy = 0, payload } = props;
   if (!payload) return null;
 
   if (payload.win) {
-    return (
-      <circle cx={cx} cy={cy} r={4} fill="#006d3b" stroke="#fff" strokeWidth={2} />
-    );
+    return <circle cx={cx} cy={cy} r={4} fill="#006d3b" stroke="#fff" strokeWidth={2} />;
   }
   return (
     <g>

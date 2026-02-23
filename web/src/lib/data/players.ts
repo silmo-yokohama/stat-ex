@@ -25,9 +25,9 @@ export type PlayerSeasonAverage = {
   ft_pct: number;
   spg: number;
   bpg: number;
-  topg: number;  // ターンオーバー/試合
-  mpg: string;   // 出場時間/試合（"MM:SS"形式）
-  eff: number;   // 効率/試合
+  topg: number; // ターンオーバー/試合
+  mpg: string; // 出場時間/試合（"MM:SS"形式）
+  eff: number; // 効率/試合
 };
 
 // ================================================
@@ -88,10 +88,7 @@ export async function getPlayerById(playerId: string): Promise<PlayerWithSeason 
 export async function getPlayerAverage(playerId: string): Promise<PlayerSeasonAverage | null> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("box_scores")
-    .select("*")
-    .eq("player_id", playerId);
+  const { data, error } = await supabase.from("box_scores").select("*").eq("player_id", playerId);
 
   if (error || !data || data.length === 0) return null;
 
@@ -101,7 +98,9 @@ export async function getPlayerAverage(playerId: string): Promise<PlayerSeasonAv
 /**
  * 全選手の平均スタッツを取得する（一覧表示用）
  */
-export async function getAllPlayerAverages(): Promise<(PlayerSeasonAverage & { player: Player })[]> {
+export async function getAllPlayerAverages(): Promise<
+  (PlayerSeasonAverage & { player: Player })[]
+> {
   const supabase = await createClient();
 
   // アクティブ選手の一覧と全ボックススコアを取得
@@ -111,9 +110,7 @@ export async function getAllPlayerAverages(): Promise<(PlayerSeasonAverage & { p
       .select("*, player_seasons!inner(*)")
       .eq("player_seasons.is_active", true)
       .order("number", { ascending: true }),
-    supabase
-      .from("box_scores")
-      .select("*"),
+    supabase.from("box_scores").select("*"),
   ]);
 
   if (playersRes.error || !playersRes.data) return [];
@@ -135,7 +132,9 @@ export async function getAllPlayerAverages(): Promise<(PlayerSeasonAverage & { p
 /**
  * 選手の試合別スタッツログを取得する
  */
-export async function getPlayerGameLog(playerId: string): Promise<
+export async function getPlayerGameLog(
+  playerId: string
+): Promise<
   (BoxScore & { game_date: string; opponent_name: string; home_away: string; result: string })[]
 > {
   const supabase = await createClient();

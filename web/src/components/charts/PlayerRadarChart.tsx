@@ -45,10 +45,7 @@ export function PlayerRadarChart({ data }: Props) {
         {/* レーダーグリッド */}
         <PolarGrid stroke="#e2e4e6" />
         {/* 軸ラベル（スタッツ名） */}
-        <PolarAngleAxis
-          dataKey="stat"
-          tick={{ fontSize: 11, fill: "#606060" }}
-        />
+        <PolarAngleAxis dataKey="stat" tick={{ fontSize: 11, fill: "#606060" }} />
         {/* 数値目盛り: 非表示 */}
         <PolarRadiusAxis tick={false} axisLine={false} />
         {/* 選手スタッツ: ダークグリーン塗りつぶし */}

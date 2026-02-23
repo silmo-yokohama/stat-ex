@@ -111,9 +111,7 @@ function PennantTooltip({
   if (!active || !payload?.length) return null;
 
   // 有効なエントリを値の降順でソート
-  const entries = payload
-    .filter((p) => p.value != null)
-    .sort((a, b) => b.value - a.value);
+  const entries = payload.filter((p) => p.value != null).sort((a, b) => b.value - a.value);
 
   // 横浜EXのエントリを分離
   const exEntry = entries.find((e) => e.name === exTeamName);
@@ -162,12 +160,8 @@ function PennantTooltip({
             lineHeight: "1.7",
           }}
         >
-          <span style={{ color: entry.color, fontWeight: 500 }}>
-            {entry.name}
-          </span>
-          <span style={{ color: "#606060" }}>
-            {formatGamesAbove(entry.value)}
-          </span>
+          <span style={{ color: entry.color, fontWeight: 500 }}>{entry.name}</span>
+          <span style={{ color: "#606060" }}>{formatGamesAbove(entry.value)}</span>
         </div>
       ))}
     </div>
@@ -214,10 +208,7 @@ export function GamesAbove500Chart({ teams }: Props) {
 
   return (
     <ResponsiveContainer width="100%" height={350}>
-      <LineChart
-        data={chartData}
-        margin={{ top: 16, right: 16, left: 4, bottom: 8 }}
-      >
+      <LineChart data={chartData} margin={{ top: 16, right: 16, left: 4, bottom: 8 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e2e4e6" />
 
         {/* X軸: 試合数 */}
@@ -238,9 +229,7 @@ export function GamesAbove500Chart({ teams }: Props) {
         />
 
         {/* ツールチップ */}
-        <Tooltip
-          content={<PennantTooltip exTeamName={exTeam?.teamName} />}
-        />
+        <Tooltip content={<PennantTooltip exTeamName={exTeam?.teamName} />} />
 
         {/* .500ライン（基準線） */}
         <ReferenceLine

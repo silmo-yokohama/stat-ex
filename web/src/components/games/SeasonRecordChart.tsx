@@ -8,15 +8,7 @@
  * Server Component から使うための use client ラッパーコンポーネント。
  */
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 // ================================================
 // 型定義
@@ -88,18 +80,11 @@ function CustomTooltip({
   const data = payload[0].payload;
 
   return (
-    <div
-      className="rounded-lg border border-border bg-card px-3 py-2 text-sm shadow-md"
-    >
-      <p className="font-semibold text-foreground">
-        vs {data.opponent}
-      </p>
+    <div className="rounded-lg border border-border bg-card px-3 py-2 text-sm shadow-md">
+      <p className="font-semibold text-foreground">vs {data.opponent}</p>
       {data.exScore !== null && data.oppScore !== null ? (
         <p className="text-muted-foreground">
-          <span
-            className="font-bold"
-            style={{ color: data.win ? COLOR_WIN : COLOR_LOSS }}
-          >
+          <span className="font-bold" style={{ color: data.win ? COLOR_WIN : COLOR_LOSS }}>
             {data.exScore}
           </span>
           {" - "}
@@ -144,14 +129,9 @@ export function SeasonRecordChart({ data }: Props) {
   return (
     <div className="w-full overflow-x-auto">
       {/* モバイルで横スクロール可能にするため、最低幅を設定 */}
-      <div
-        style={{ minWidth: Math.max(chartData.length * 28, 300) }}
-      >
+      <div style={{ minWidth: Math.max(chartData.length * 28, 300) }}>
         <ResponsiveContainer width="100%" height={100}>
-          <BarChart
-            data={chartData}
-            margin={{ top: 4, right: 4, left: 4, bottom: 0 }}
-          >
+          <BarChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
             <XAxis
               dataKey="label"
               tick={{ fontSize: 10, fill: "#606060" }}
@@ -161,10 +141,7 @@ export function SeasonRecordChart({ data }: Props) {
             />
             {/* Y軸は非表示（全バー同じ高さのため不要） */}
             <YAxis hide domain={[0, BAR_HEIGHT_VALUE]} />
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ fill: "rgba(0,0,0,0.04)" }}
-            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(0,0,0,0.04)" }} />
             <Bar dataKey="value" radius={[3, 3, 0, 0]} maxBarSize={20}>
               {chartData.map((entry, index) => {
                 // 勝敗に応じてバーの色を切り替え

@@ -74,9 +74,7 @@ describe("getNews", () => {
     expect(news).toHaveLength(1);
 
     // 全ニュース中で最新のpublished_atであることを確認
-    const allSorted = [...mockNews].sort((a, b) =>
-      b.published_at.localeCompare(a.published_at)
-    );
+    const allSorted = [...mockNews].sort((a, b) => b.published_at.localeCompare(a.published_at));
     expect(news[0].id).toBe(allSorted[0].id);
   });
 });

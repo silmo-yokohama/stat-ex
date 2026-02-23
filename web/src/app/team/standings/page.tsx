@@ -42,10 +42,11 @@ export default async function StandingsPage() {
     <div className="space-y-6">
       {/* ページタイトル */}
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold"><Icon name="leaderboard" size={24} className="text-primary" />B2順位表</h1>
-        <p className="text-sm text-muted-foreground">
-          2025-26シーズン
-        </p>
+        <h1 className="flex items-center gap-2 text-2xl font-bold">
+          <Icon name="leaderboard" size={24} className="text-primary" />
+          B2順位表
+        </h1>
+        <p className="text-sm text-muted-foreground">2025-26シーズン</p>
       </div>
 
       {/* 順位表テーブル（モバイルで水平スクロール対応） */}
@@ -72,14 +73,9 @@ export default async function StandingsPage() {
               const isHighlight = isYokohamaEx(row.team_id);
 
               return (
-                <TableRow
-                  key={row.id}
-                  className={isHighlight ? "highlight-row bg-[#e8f5ee]" : ""}
-                >
+                <TableRow key={row.id} className={isHighlight ? "highlight-row bg-[#e8f5ee]" : ""}>
                   {/* 順位 */}
-                  <TableCell className="text-center font-display text-lg">
-                    {row.rank}
-                  </TableCell>
+                  <TableCell className="text-center font-display text-lg">{row.rank}</TableCell>
 
                   {/* チーム名 */}
                   <TableCell
@@ -94,9 +90,7 @@ export default async function StandingsPage() {
                   </TableCell>
 
                   {/* 敗数 */}
-                  <TableCell className="text-center text-[#9CA3AF]">
-                    {row.losses}
-                  </TableCell>
+                  <TableCell className="text-center text-[#9CA3AF]">{row.losses}</TableCell>
 
                   {/* 勝率 */}
                   <TableCell className="text-center">
@@ -119,9 +113,7 @@ export default async function StandingsPage() {
 
                   {/* 平均失点 */}
                   <TableCell className="text-center">
-                    {row.points_against !== null
-                      ? row.points_against.toFixed(1)
-                      : "-"}
+                    {row.points_against !== null ? row.points_against.toFixed(1) : "-"}
                   </TableCell>
 
                   {/* 得失点差 */}
@@ -157,9 +149,7 @@ export default async function StandingsPage() {
                   </TableCell>
 
                   {/* 直近5試合 */}
-                  <TableCell className="text-center text-sm">
-                    {row.last5 ?? "-"}
-                  </TableCell>
+                  <TableCell className="text-center text-sm">{row.last5 ?? "-"}</TableCell>
                 </TableRow>
               );
             })}

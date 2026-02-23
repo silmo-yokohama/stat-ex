@@ -43,13 +43,9 @@ function NewsItem({ news }: { news: News }) {
 
       {/* タイトル + ソース名 */}
       <div className="min-w-0 flex-1">
-        <p className="line-clamp-2 text-sm font-medium text-foreground">
-          {news.title}
-        </p>
+        <p className="line-clamp-2 text-sm font-medium text-foreground">{news.title}</p>
         {news.source_name && (
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {news.source_name}
-          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{news.source_name}</p>
         )}
       </div>
     </a>
@@ -68,13 +64,9 @@ export function NewsTabs({ officialNews, mediaNews }: Props) {
       <TabsContent value="official">
         <div className="divide-y divide-border">
           {officialNews.length > 0 ? (
-            officialNews.map((news) => (
-              <NewsItem key={news.id} news={news} />
-            ))
+            officialNews.map((news) => <NewsItem key={news.id} news={news} />)
           ) : (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              ニュースはありません
-            </p>
+            <p className="py-8 text-center text-sm text-muted-foreground">ニュースはありません</p>
           )}
         </div>
       </TabsContent>
@@ -83,13 +75,9 @@ export function NewsTabs({ officialNews, mediaNews }: Props) {
       <TabsContent value="media">
         <div className="divide-y divide-border">
           {mediaNews.length > 0 ? (
-            mediaNews.map((news) => (
-              <NewsItem key={news.id} news={news} />
-            ))
+            mediaNews.map((news) => <NewsItem key={news.id} news={news} />)
           ) : (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              ニュースはありません
-            </p>
+            <p className="py-8 text-center text-sm text-muted-foreground">ニュースはありません</p>
           )}
         </div>
       </TabsContent>

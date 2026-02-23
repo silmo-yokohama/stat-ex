@@ -91,9 +91,7 @@ export function CumulativeWinsChart({ data }: Props) {
           labelFormatter={(label: unknown) => `第${label}試合`}
         />
         <Legend
-          formatter={(value: string) =>
-            value === "wins" ? "累積勝利数" : "理想ペース"
-          }
+          formatter={(value: string) => (value === "wins" ? "累積勝利数" : "理想ペース")}
           wrapperStyle={{ fontSize: "12px" }}
         />
         {/* 理想ペース: 破線で表示 */}

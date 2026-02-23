@@ -154,12 +154,7 @@ const SingleDonut = ({ data, rate, title, wins, losses }: DonutProps) => (
  * @param awayWins - アウェイ勝利数
  * @param awayLosses - アウェイ敗北数
  */
-export function HomeAwayDonut({
-  homeWins,
-  homeLosses,
-  awayWins,
-  awayLosses,
-}: Props) {
+export function HomeAwayDonut({ homeWins, homeLosses, awayWins, awayLosses }: Props) {
   const homeData = [
     { name: "勝ち", value: homeWins },
     { name: "負け", value: homeLosses },

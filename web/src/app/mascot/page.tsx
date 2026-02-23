@@ -70,8 +70,7 @@ const ROLL: MascotData = {
   birthday: "2月5日",
   birthdayNote: "ニコニコで「笑顔の日」",
   role: "特別広報＆営業部",
-  personality:
-    "切り返し上手。MC対応も巧み。ピックに甘えがちで、たまにヤキモチも",
+  personality: "切り返し上手。MC対応も巧み。ピックに甘えがちで、たまにヤキモチも",
   skills: "シュートが上手い。どんな状況もロールして乗り越える",
   favorite: "豚まん",
   debut: "2023年1月6日（B3リーグ レギュラーシーズン 第13節 vs 湘南ユナイテッド）",
@@ -140,13 +139,7 @@ const COMMON_TRAITS: { icon: string; label: string; value: string }[] = [
  * @param initial - 表示するイニシャル文字（"P" or "R"）
  * @param size - アバターのサイズ（"lg" = 128px, "sm" = 80px）
  */
-function MascotAvatar({
-  initial,
-  size = "lg",
-}: {
-  initial: string;
-  size?: "lg" | "sm";
-}) {
+function MascotAvatar({ initial, size = "lg" }: { initial: string; size?: "lg" | "sm" }) {
   const sizeClasses = size === "lg" ? "h-32 w-32 text-5xl" : "h-20 w-20 text-3xl";
 
   return (
@@ -168,13 +161,7 @@ function MascotAvatar({
  * @param mascot - マスコットデータ
  * @param animationDelay - フェードインアニメーションの遅延クラス
  */
-function MascotCard({
-  mascot,
-  animationDelay,
-}: {
-  mascot: MascotData;
-  animationDelay: string;
-}) {
+function MascotCard({ mascot, animationDelay }: { mascot: MascotData; animationDelay: string }) {
   return (
     <div
       className={`relative overflow-hidden rounded-xl border border-border bg-card p-6 animate-fade-in-up ${animationDelay}`}
@@ -246,19 +233,14 @@ function ProfileDetailCard({
         <MascotAvatar initial={mascot.initial} size="sm" />
         <span>
           {mascot.name}
-          <span className="ml-1 text-sm font-normal text-muted-foreground">
-            のプロフィール
-          </span>
+          <span className="ml-1 text-sm font-normal text-muted-foreground">のプロフィール</span>
         </span>
       </h3>
       <Separator className="mb-5" />
 
       <dl className="space-y-4">
         {PROFILE_FIELDS.map(({ icon, label, key }) => (
-          <div
-            key={key}
-            className="grid grid-cols-1 gap-1 sm:grid-cols-[140px_1fr] sm:gap-4"
-          >
+          <div key={key} className="grid grid-cols-1 gap-1 sm:grid-cols-[140px_1fr] sm:gap-4">
             <dt className="flex items-center gap-1.5 text-sm font-semibold text-[#006d3b]">
               <Icon name={icon} size={16} />
               {label}
@@ -378,14 +360,8 @@ export default async function MascotPage() {
           {/* 中央の矢印（関係を示す） */}
           <div className="flex items-center justify-center">
             <div className="flex flex-row items-center gap-1">
-              <Icon
-                name="swap_horiz"
-                size={32}
-                className="text-[#006d3b]/40"
-              />
-              <span className="text-xs font-medium text-muted-foreground">
-                幼なじみ
-              </span>
+              <Icon name="swap_horiz" size={32} className="text-[#006d3b]/40" />
+              <span className="text-xs font-medium text-muted-foreground">幼なじみ</span>
             </div>
           </div>
 
@@ -416,15 +392,9 @@ export default async function MascotPage() {
                 key={trait.label}
                 className="flex items-start gap-2 rounded-lg border border-border bg-background p-3"
               >
-                <Icon
-                  name={trait.icon}
-                  size={18}
-                  className="mt-0.5 shrink-0 text-[#006d3b]"
-                />
+                <Icon name={trait.icon} size={18} className="mt-0.5 shrink-0 text-[#006d3b]" />
                 <div>
-                  <p className="text-xs font-semibold text-muted-foreground">
-                    {trait.label}
-                  </p>
+                  <p className="text-xs font-semibold text-muted-foreground">{trait.label}</p>
                   <p className="text-sm text-foreground">{trait.value}</p>
                 </div>
               </div>
@@ -452,19 +422,11 @@ export default async function MascotPage() {
             <div className="flex items-center gap-3">
               <MascotAvatar initial="P" size="sm" />
               <div>
-                <p className="font-semibold text-foreground">
-                  ピック 公式プロフィール
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  yokohama-ex.jp
-                </p>
+                <p className="font-semibold text-foreground">ピック 公式プロフィール</p>
+                <p className="text-xs text-muted-foreground">yokohama-ex.jp</p>
               </div>
             </div>
-            <Icon
-              name="open_in_new"
-              size={20}
-              className="text-muted-foreground"
-            />
+            <Icon name="open_in_new" size={20} className="text-muted-foreground" />
           </Link>
 
           <Link
@@ -476,19 +438,11 @@ export default async function MascotPage() {
             <div className="flex items-center gap-3">
               <MascotAvatar initial="R" size="sm" />
               <div>
-                <p className="font-semibold text-foreground">
-                  ロール 公式プロフィール
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  yokohama-ex.jp
-                </p>
+                <p className="font-semibold text-foreground">ロール 公式プロフィール</p>
+                <p className="text-xs text-muted-foreground">yokohama-ex.jp</p>
               </div>
             </div>
-            <Icon
-              name="open_in_new"
-              size={20}
-              className="text-muted-foreground"
-            />
+            <Icon name="open_in_new" size={20} className="text-muted-foreground" />
           </Link>
         </div>
       </section>

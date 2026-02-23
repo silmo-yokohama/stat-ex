@@ -106,12 +106,13 @@ const CustomTooltip = ({
  */
 export function PlayerScatterChart({ data }: Props) {
   // ポジションごとにデータを分割して色分け表示する
-  const groupedByPosition = POSITION_KEYS.reduce<
-    Record<string, PlayerScatterData[]>
-  >((acc, pos) => {
-    acc[pos] = data.filter((d) => d.position === pos);
-    return acc;
-  }, {});
+  const groupedByPosition = POSITION_KEYS.reduce<Record<string, PlayerScatterData[]>>(
+    (acc, pos) => {
+      acc[pos] = data.filter((d) => d.position === pos);
+      return acc;
+    },
+    {}
+  );
 
   return (
     <ResponsiveContainer width="100%" height={280}>
@@ -148,14 +149,9 @@ export function PlayerScatterChart({ data }: Props) {
         />
         {/* APGをバブルサイズにマッピング（最小30px、最大300px） */}
         <ZAxis dataKey="apg" type="number" name="APG" range={[30, 300]} />
-        <Tooltip
-          content={<CustomTooltip />}
-          cursor={{ strokeDasharray: "3 3" }}
-        />
+        <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: "3 3" }} />
         <Legend
-          formatter={(value: string) =>
-            POSITION_LABELS[value] ?? value
-          }
+          formatter={(value: string) => POSITION_LABELS[value] ?? value}
           wrapperStyle={{ fontSize: "12px" }}
         />
         {/* ポジションごとに Scatter を描画 */}
@@ -168,7 +164,7 @@ export function PlayerScatterChart({ data }: Props) {
               fill={POSITION_COLORS[pos] ?? "#606060"}
               fillOpacity={0.7}
             />
-          ) : null,
+          ) : null
         )}
       </ScatterChart>
     </ResponsiveContainer>

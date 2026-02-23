@@ -43,13 +43,7 @@ export function GameQuarterChart({
   homeTeamName: string;
   awayTeamName: string;
 }) {
-  return (
-    <QuarterChart
-      data={data}
-      homeTeamName={homeTeamName}
-      awayTeamName={awayTeamName}
-    />
-  );
+  return <QuarterChart data={data} homeTeamName={homeTeamName} awayTeamName={awayTeamName} />;
 }
 
 /**
@@ -70,11 +64,5 @@ export function GameScoreFlowChart({
   homeTeamName: string;
   awayTeamName: string;
 }) {
-  return (
-    <ScoreFlowChart
-      data={data}
-      homeTeamName={homeTeamName}
-      awayTeamName={awayTeamName}
-    />
-  );
+  return <ScoreFlowChart data={data} homeTeamName={homeTeamName} awayTeamName={awayTeamName} />;
 }

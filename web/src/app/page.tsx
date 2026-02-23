@@ -98,9 +98,7 @@ export default async function Home() {
   ]);
 
   // 順位表から横浜EXの順位を抽出
-  const yokohamaStanding = standings.find(
-    (s) => s.short_name === TEAM.shortName
-  );
+  const yokohamaStanding = standings.find((s) => s.short_name === TEAM.shortName);
   const rank = yokohamaStanding?.rank ?? null;
 
   // ペナントレースチャート用データを構築
@@ -110,11 +108,7 @@ export default async function Home() {
     .sort((a, b) => a.game_date.localeCompare(b.game_date))
     .map((g) => isWin(g) === true);
 
-  const pennantRaceData = buildPennantRaceData(
-    standings,
-    exGameResults,
-    TEAM.shortName,
-  );
+  const pennantRaceData = buildPennantRaceData(standings, exGameResults, TEAM.shortName);
 
   // 得点推移データをチャート用に変換
   const trendData = scoreTrend.map((t) => ({
@@ -131,9 +125,7 @@ export default async function Home() {
 
   // ホーム勝率の算出
   const homeTotal = teamStats.home_wins + teamStats.home_losses;
-  const homeWinPct = homeTotal > 0
-    ? ((teamStats.home_wins / homeTotal) * 100).toFixed(1)
-    : "--";
+  const homeWinPct = homeTotal > 0 ? ((teamStats.home_wins / homeTotal) * 100).toFixed(1) : "--";
 
   // 得失点差の算出
   const pointDiff =
@@ -141,9 +133,7 @@ export default async function Home() {
       ? teamStats.avg_points_for - teamStats.avg_points_against
       : null;
   const pointDiffDisplay =
-    pointDiff !== null
-      ? `${pointDiff >= 0 ? "+" : ""}${pointDiff.toFixed(1)}`
-      : "--";
+    pointDiff !== null ? `${pointDiff >= 0 ? "+" : ""}${pointDiff.toFixed(1)}` : "--";
 
   return (
     <div className="space-y-6">
@@ -174,17 +164,13 @@ export default async function Home() {
                 <div className="text-center sm:text-left">
                   <div className="mb-1 flex items-center justify-center gap-2 sm:justify-start">
                     {latestWin !== null && (
-                      <Badge className="bg-white/20 text-white">
-                        {latestWin ? "WIN" : "LOSS"}
-                      </Badge>
+                      <Badge className="bg-white/20 text-white">{latestWin ? "WIN" : "LOSS"}</Badge>
                     )}
                     <Badge className="bg-white/20 text-white">
                       {latestGame.home_away === "HOME" ? "HOME" : "AWAY"}
                     </Badge>
                   </div>
-                  <p className="text-lg font-semibold text-white">
-                    vs {latestGame.opponent.name}
-                  </p>
+                  <p className="text-lg font-semibold text-white">vs {latestGame.opponent.name}</p>
                   <div className="mt-1 flex items-center justify-center gap-3 text-sm text-white/70 sm:justify-start">
                     <span className="flex items-center gap-1">
                       <Icon name="calendar_today" size={14} />
@@ -210,14 +196,10 @@ export default async function Home() {
                       </p>
                     </div>
                     {/* セパレータ */}
-                    <span className="font-display text-4xl text-white/50">
-                      -
-                    </span>
+                    <span className="font-display text-4xl text-white/50">-</span>
                     {/* 相手スコア */}
                     <div className="text-center">
-                      <p className="text-xs text-white/70">
-                        {latestGame.opponent.short_name}
-                      </p>
+                      <p className="text-xs text-white/70">{latestGame.opponent.short_name}</p>
                       <p className="font-display text-7xl leading-none text-white/80">
                         {latestOppScore}
                       </p>
@@ -247,8 +229,7 @@ export default async function Home() {
                       {formatGameDate(nextGame.game_date)}
                     </span>
                     <span>
-                      {nextGame.game_time ?? ""}{" "}
-                      {nextGame.home_away === "HOME" ? "HOME" : "AWAY"}
+                      {nextGame.game_time ?? ""} {nextGame.home_away === "HOME" ? "HOME" : "AWAY"}
                     </span>
                   </div>
                 </div>
@@ -266,7 +247,8 @@ export default async function Home() {
         {/* 順位 */}
         <div className="stat-card-green animate-fade-in-up delay-1 rounded-xl border border-border bg-card p-4 text-center">
           <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-            <Icon name="leaderboard" size={14} />B2 順位
+            <Icon name="leaderboard" size={14} />
+            B2 順位
           </p>
           <p className="font-display text-4xl leading-tight text-foreground">
             {rank !== null ? `${rank}` : "--"}
@@ -279,7 +261,8 @@ export default async function Home() {
         {/* 勝率 */}
         <div className="stat-card-emerald animate-fade-in-up delay-2 rounded-xl border border-border bg-card p-4 text-center">
           <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-            <Icon name="percent" size={14} />勝率
+            <Icon name="percent" size={14} />
+            勝率
           </p>
           <p className="font-display text-4xl leading-tight text-foreground">
             {teamStats.win_pct !== null ? `${teamStats.win_pct}` : "--"}
@@ -292,7 +275,8 @@ export default async function Home() {
         {/* 連勝 / 連敗 */}
         <div className="stat-card-teal animate-fade-in-up delay-3 rounded-xl border border-border bg-card p-4 text-center">
           <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-            <Icon name="local_fire_department" size={14} />現在のストリーク
+            <Icon name="local_fire_department" size={14} />
+            現在のストリーク
           </p>
           <div className="flex items-center justify-center gap-1">
             {streak.type === "W" ? (
@@ -300,9 +284,7 @@ export default async function Home() {
             ) : (
               <Icon name="trending_down" size={16} className="text-loss" />
             )}
-            <p className="font-display text-4xl leading-tight text-foreground">
-              {streak.count}
-            </p>
+            <p className="font-display text-4xl leading-tight text-foreground">{streak.count}</p>
           </div>
           <p className="text-xs text-muted-foreground">
             {streak.type === "W" ? "連勝中" : "連敗中"}
@@ -312,12 +294,11 @@ export default async function Home() {
         {/* 平均得点 */}
         <div className="stat-card-indigo animate-fade-in-up delay-4 rounded-xl border border-border bg-card p-4 text-center">
           <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-            <Icon name="sports_score" size={14} />平均得点
+            <Icon name="sports_score" size={14} />
+            平均得点
           </p>
           <p className="font-display text-4xl leading-tight text-foreground">
-            {teamStats.avg_points_for !== null
-              ? teamStats.avg_points_for.toFixed(1)
-              : "--"}
+            {teamStats.avg_points_for !== null ? teamStats.avg_points_for.toFixed(1) : "--"}
           </p>
           {teamStats.avg_points_against !== null && (
             <p className="text-xs text-muted-foreground">
@@ -329,7 +310,8 @@ export default async function Home() {
         {/* ホーム勝率 */}
         <div className="stat-card-amber animate-fade-in-up delay-5 rounded-xl border border-border bg-card p-4 text-center">
           <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-            <Icon name="home" size={14} />ホーム勝率
+            <Icon name="home" size={14} />
+            ホーム勝率
           </p>
           <p className="font-display text-4xl leading-tight text-foreground">
             {homeWinPct}
@@ -343,11 +325,10 @@ export default async function Home() {
         {/* 得失点差 */}
         <div className="stat-card-rose animate-fade-in-up delay-6 rounded-xl border border-border bg-card p-4 text-center">
           <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-            <Icon name="compare_arrows" size={14} />得失点差
+            <Icon name="compare_arrows" size={14} />
+            得失点差
           </p>
-          <p className="font-display text-4xl leading-tight text-foreground">
-            {pointDiffDisplay}
-          </p>
+          <p className="font-display text-4xl leading-tight text-foreground">{pointDiffDisplay}</p>
           <p className="text-xs text-muted-foreground">1試合あたり</p>
         </div>
       </section>
@@ -403,12 +384,8 @@ export default async function Home() {
 
                 {/* 選手情報 */}
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground">
-                    {leader.category}
-                  </p>
-                  <p className="text-sm font-semibold text-foreground">
-                    {leader.player.name}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{leader.category}</p>
+                  <p className="text-sm font-semibold text-foreground">{leader.player.name}</p>
                 </div>
 
                 {/* スタッツ数値 */}
