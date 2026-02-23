@@ -111,12 +111,28 @@ export default async function Home() {
   const pennantRaceData = buildPennantRaceData(standings, exGameResults, TEAM.shortName);
 
   // 得点推移データをチャート用に変換
-  const trendData = scoreTrend.map((t) => ({
-    label: t.game.opponent.short_name,
-    exScore: t.exScore,
-    oppScore: t.oppScore,
-    win: t.win,
-  }));
+  // 同じ相手チーム名が複数回出る場合は「①②」で区別する（重複ラベル対策）
+  const trendData = (() => {
+    const nameCount = new Map<string, number>();
+    const nameTotals = new Map<string, number>();
+    // まず各チーム名の出現回数をカウント
+    for (const t of scoreTrend) {
+      const name = t.game.opponent.short_name;
+      nameTotals.set(name, (nameTotals.get(name) ?? 0) + 1);
+    }
+    const nums = ["①", "②", "③", "④"];
+    return scoreTrend.map((t) => {
+      const name = t.game.opponent.short_name;
+      const count = (nameCount.get(name) ?? 0) + 1;
+      nameCount.set(name, count);
+      // 同名が2回以上出る場合のみ連番を付与
+      const label =
+        (nameTotals.get(name) ?? 1) > 1
+          ? `${name}${nums[count - 1] ?? count}`
+          : name;
+      return { label, exScore: t.exScore, oppScore: t.oppScore, win: t.win };
+    });
+  })();
 
   // 直近試合の勝敗判定
   const latestWin = latestGame ? isWin(latestGame) : null;

@@ -6,19 +6,12 @@ import { Icon } from "@/components/ui/Icon";
 import { TEAM } from "@/lib/constants";
 import { getGameDetail } from "@/lib/data";
 import { isWin, getExScore, getOppScore } from "@/lib/data/games";
-import type { GameDetail, BoxScore, Player } from "@/lib/types/database";
+import type { GameDetail } from "@/lib/types/database";
 
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
 import { GameQuarterChart, GameScoreFlowChart } from "@/components/games/GameCharts";
 import { LiveScoreboard } from "@/components/games/LiveScoreboard";
+import { BoxScoreTable } from "@/components/games/BoxScoreTable";
 
 /**
  * P3: 試合詳細ページ
@@ -244,18 +237,6 @@ function buildPlayByPlayData(
   return points;
 }
 
-/**
- * ボックススコアから得点上位3名のIDセットを取得する
- */
-function getTopIds(boxScores: (BoxScore & { player: Player })[], key: "pts" | "eff"): Set<string> {
-  return new Set(
-    [...boxScores]
-      .sort((a, b) => b[key] - a[key])
-      .slice(0, 3)
-      .map((bs) => bs.id)
-  );
-}
-
 // ================================================
 // サブコンポーネント
 // ================================================
@@ -401,119 +382,6 @@ function Scoreboard({
           </table>
         </div>
       )}
-    </div>
-  );
-}
-
-/**
- * ボックススコアテーブル
- *
- * 選手別の個人成績を一覧表示する。
- * - スターターは太字で強調
- * - 得点(PTS)上位3名はセル背景をハイライト
- * - EFF上位3名はテキストをグリーン太字で強調
- * - +/-がプラスならグリーン、マイナスなら赤で色分け
- */
-function BoxScoreTable({ boxScores }: { boxScores: (BoxScore & { player: Player })[] }) {
-  if (boxScores.length === 0) return null;
-
-  // スターターを先頭に表示
-  const sorted = [...boxScores].sort((a, b) => {
-    if (a.is_starter && !b.is_starter) return -1;
-    if (!a.is_starter && b.is_starter) return 1;
-    return 0;
-  });
-
-  // 得点上位3名・EFF上位3名のIDセットを算出
-  const ptsTop3 = getTopIds(boxScores, "pts");
-  const effTop3 = getTopIds(boxScores, "eff");
-
-  return (
-    <div className="rounded-xl border border-border bg-card p-6">
-      <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
-        <Icon name="table_chart" size={20} className="text-primary" />
-        ボックススコア
-      </h2>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-10 text-center">#</TableHead>
-            <TableHead>選手名</TableHead>
-            <TableHead className="text-center">MIN</TableHead>
-            <TableHead className="text-center">PTS</TableHead>
-            <TableHead className="text-center">FG%</TableHead>
-            <TableHead className="text-center">3P%</TableHead>
-            <TableHead className="text-center">FT%</TableHead>
-            <TableHead className="text-center">REB</TableHead>
-            <TableHead className="text-center">AST</TableHead>
-            <TableHead className="text-center">TO</TableHead>
-            <TableHead className="text-center">STL</TableHead>
-            <TableHead className="text-center">BLK</TableHead>
-            <TableHead className="text-center">F</TableHead>
-            <TableHead className="text-center">EFF</TableHead>
-            <TableHead className="text-center">+/-</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sorted.map((bs, index) => {
-            const rowClass = bs.is_starter ? "font-semibold" : "";
-            // スターターとベンチの境界にセパレータを挿入するためのフラグ
-            const isFirstBench = !bs.is_starter && index > 0 && sorted[index - 1].is_starter;
-
-            // 得点上位3名はセル背景をハイライト
-            const isPtsTop = ptsTop3.has(bs.id);
-            const ptsHighlight = isPtsTop ? "bg-[#e8f5ee]" : "";
-
-            // EFF上位3名はテキストをグリーン太字で強調
-            const isEffTop = effTop3.has(bs.id);
-            const effHighlight = isEffTop ? "text-[#006d3b] font-bold" : "";
-
-            // +/-の色分け: プラスはグリーン、マイナスは赤
-            const plusMinusColor =
-              bs.plus_minus > 0 ? "text-[#006d3b]" : bs.plus_minus < 0 ? "text-[#ef4444]" : "";
-
-            return (
-              <TableRow
-                key={bs.id}
-                className={`${isFirstBench ? "border-t-2 border-border" : ""} ${index % 2 === 1 ? "bg-muted/50" : ""}`}
-              >
-                <TableCell className={`text-center ${rowClass}`}>
-                  {bs.player.number ?? "-"}
-                </TableCell>
-                <TableCell className={rowClass}>{bs.player.name}</TableCell>
-                <TableCell className={`text-center ${rowClass}`}>{bs.minutes ?? "-"}</TableCell>
-                {/* 得点: 上位3名はセル背景ハイライト */}
-                <TableCell className={`text-center ${rowClass} ${ptsHighlight}`}>
-                  {bs.pts}
-                </TableCell>
-                <TableCell className={`text-center ${rowClass}`}>
-                  {bs.fg_pct !== null ? `${bs.fg_pct}%` : "-"}
-                </TableCell>
-                <TableCell className={`text-center ${rowClass}`}>
-                  {bs.tp_pct !== null ? `${bs.tp_pct}%` : "-"}
-                </TableCell>
-                <TableCell className={`text-center ${rowClass}`}>
-                  {bs.ft_pct !== null ? `${bs.ft_pct}%` : "-"}
-                </TableCell>
-                <TableCell className={`text-center ${rowClass}`}>{bs.reb}</TableCell>
-                <TableCell className={`text-center ${rowClass}`}>{bs.ast}</TableCell>
-                <TableCell className={`text-center ${rowClass}`}>{bs.tov}</TableCell>
-                <TableCell className={`text-center ${rowClass}`}>{bs.stl}</TableCell>
-                <TableCell className={`text-center ${rowClass}`}>{bs.blk}</TableCell>
-                <TableCell className={`text-center ${rowClass}`}>{bs.fouls}</TableCell>
-                {/* EFF: 上位3名はグリーン太字で強調 */}
-                <TableCell className={`text-center ${rowClass} ${effHighlight}`}>
-                  {bs.eff}
-                </TableCell>
-                {/* +/-: プラスはグリーン、マイナスは赤 */}
-                <TableCell className={`text-center ${rowClass} ${plusMinusColor}`}>
-                  {bs.plus_minus > 0 ? `+${bs.plus_minus}` : bs.plus_minus}
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
     </div>
   );
 }
@@ -677,8 +545,13 @@ export default async function GameDetailPage({ params }: Props) {
             </section>
           )}
 
-          {/* セクション3: ボックススコアテーブル */}
-          <BoxScoreTable boxScores={game.box_scores} />
+          {/* セクション3: ボックススコアテーブル（タブ切替・ソート付き） */}
+          <BoxScoreTable
+            boxScores={game.box_scores}
+            isExHome={game.home_away === "HOME"}
+            homeName={homeName}
+            awayName={awayName}
+          />
 
           {/* セクション4: AI試合寸評 */}
           {game.comment && <AICommentary content={game.comment.content} />}

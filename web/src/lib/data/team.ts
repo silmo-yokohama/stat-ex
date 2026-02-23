@@ -134,10 +134,12 @@ export async function getInjuries(): Promise<
 export async function getTeamLeaders(): Promise<TeamLeader[]> {
   const supabase = await createClient();
 
-  // アクティブ選手の全ボックススコアを取得
+  // EX選手（is_active=true）のボックススコアのみを取得
+  // players → player_seasons の INNER JOIN でEX選手に絞る
   const { data, error } = await supabase
     .from("box_scores")
-    .select("player_id, pts, reb, ast, player:players(*)");
+    .select("player_id, pts, reb, ast, player:players!inner(*, player_seasons!inner(*))")
+    .eq("player.player_seasons.is_active", true);
 
   if (error || !data || data.length === 0) return [];
 

@@ -370,8 +370,8 @@ def _store_box_scores_and_comments(
         if not bs_data or bs_data.get("error"):
             continue
 
-        # ゲームUUIDを取得
-        game_res = client.table("games").select("id").eq(
+        # ゲームUUID + home_away を取得
+        game_res = client.table("games").select("id, home_away").eq(
             "schedule_key", schedule_key
         ).execute()
         if not game_res.data:
@@ -399,9 +399,18 @@ def _store_box_scores_and_comments(
             output_error(f"クォータースコア更新エラー ({schedule_key}): {e}", "supabase.quarter")
 
         # ボックススコアの格納
+        # home_away に基づいてEX選手かどうかを判定する
+        # HOME試合 → home_box_scores がEX選手、AWAY試合 → away_box_scores がEX選手
+        game_home_away = game_res.data[0].get("home_away", "HOME")
         for side_key in ["home_box_scores", "away_box_scores"]:
+            is_ex_side = (
+                (game_home_away == "HOME" and side_key == "home_box_scores")
+                or (game_home_away == "AWAY" and side_key == "away_box_scores")
+            )
             for player_stats in bs_data.get(side_key, []):
-                _upsert_single_box_score(client, cache, game_uuid, player_stats)
+                _upsert_single_box_score(
+                    client, cache, game_uuid, player_stats, is_ex_player=is_ex_side
+                )
 
         # AI寸評の格納
         comment_text = comments.get(schedule_key)
@@ -704,30 +713,37 @@ def _replace_injuries(client: Client, cache: LookupCache, data: dict) -> None:
 
 
 def _upsert_single_box_score(
-    client: Client, cache: LookupCache, game_uuid: str, player_stats: dict
+    client: Client, cache: LookupCache, game_uuid: str, player_stats: dict,
+    *, is_ex_player: bool = True,
 ) -> None:
     """
     1選手分のボックススコアをSupabaseに格納する
 
     選手が未登録の場合は自動登録する。
+    is_ex_player=True の場合のみ player_seasons.is_active=True に設定する。
+
+    Args:
+        is_ex_player: この選手がEXの選手かどうか（対戦相手の場合はFalse）
     """
     bleague_pid = str(player_stats.get("player_id", ""))
     player_uuid = cache.get_player_uuid(bleague_pid)
 
     # 未登録選手の自動登録
     if not player_uuid:
-        player_uuid = _register_new_player(client, cache, player_stats)
+        player_uuid = _register_new_player(
+            client, cache, player_stats, is_ex_player=is_ex_player
+        )
         if not player_uuid:
             return
     else:
         # 既存選手でも player_seasons が存在することを保証する
-        # （シーズン跨ぎや手動登録時の登録漏れ対策）
+        # EX選手のみ is_active=True、対戦相手は is_active=False
         try:
             client.table("player_seasons").upsert(
                 {
                     "player_id": player_uuid,
                     "season_id": cache.season_id,
-                    "is_active": True,
+                    "is_active": is_ex_player,
                 },
                 on_conflict="player_id,season_id",
             ).execute()
@@ -773,7 +789,8 @@ def _upsert_single_box_score(
 
 
 def _register_new_player(
-    client: Client, cache: LookupCache, player_stats: dict
+    client: Client, cache: LookupCache, player_stats: dict,
+    *, is_ex_player: bool = True,
 ) -> str | None:
     """
     ボックススコアに出現した未登録選手を自動登録する
@@ -782,6 +799,7 @@ def _register_new_player(
         client: Supabaseクライアント
         cache: ルックアップキャッシュ
         player_stats: ボックススコアの選手データ
+        is_ex_player: EX選手かどうか（対戦相手の場合はFalse）
 
     Returns:
         登録した選手のUUID、失敗時はNone
@@ -810,16 +828,18 @@ def _register_new_player(
             cache.register_player(bleague_pid, new_uuid)
 
             # player_seasons にも登録
+            # EX選手のみ is_active=True、対戦相手は is_active=False
             client.table("player_seasons").upsert(
                 {
                     "player_id": new_uuid,
                     "season_id": cache.season_id,
-                    "is_active": True,
+                    "is_active": is_ex_player,
                 },
                 on_conflict="player_id,season_id",
             ).execute()
 
-            print(f"[STAT-EX]     新規選手登録: {player_name} (#{player_number})")
+            side_label = "EX" if is_ex_player else "対戦相手"
+            print(f"[STAT-EX]     新規選手登録: {player_name} (#{player_number}) [{side_label}]")
             return new_uuid
     except Exception as e:
         output_error(f"選手登録エラー ({player_name}): {e}", "supabase.players")

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/Icon";
 import { PlayersScatterChart } from "@/components/players/PlayerCharts";
 import { PlayerAvatar } from "@/components/players/PlayerAvatar";
-import type { Player } from "@/lib/types/database";
+import type { Player, PlayerWithSeason } from "@/lib/types/database";
 import type { PlayerSeasonAverage } from "@/lib/data/players";
 
 export const metadata: Metadata = {
@@ -47,9 +47,12 @@ function PlayerRow({
   player,
   average,
 }: {
-  player: Player;
+  player: PlayerWithSeason;
   average: (PlayerSeasonAverage & { player: Player }) | undefined;
 }) {
+  // 在籍状態の判定（player_seasons の is_active を参照）
+  const isActive = player.player_seasons?.some((ps) => ps.is_active) ?? false;
+
   return (
     <Link
       href={`/players/${player.id}`}
@@ -58,7 +61,7 @@ function PlayerRow({
       {/* 選手アバター画像 */}
       <PlayerAvatar player={player} size="lg" />
 
-      {/* 選手情報（名前・背番号・ポジション） */}
+      {/* 選手情報（名前・背番号・ポジション・在籍状態） */}
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex items-center gap-2">
           <span className="font-display text-2xl leading-none text-[#006d3b]">
@@ -72,6 +75,17 @@ function PlayerRow({
               {player.position}
             </Badge>
           )}
+          {/* 在籍状態バッジ */}
+          <Badge
+            variant="outline"
+            className={`border-0 text-[10px] ${
+              isActive
+                ? "bg-emerald-50 text-emerald-700"
+                : "bg-gray-100 text-gray-500"
+            }`}
+          >
+            {isActive ? "在籍中" : "移籍/引退"}
+          </Badge>
         </div>
         <p className="text-base font-semibold text-foreground group-hover:text-[#006d3b]">
           {player.name}

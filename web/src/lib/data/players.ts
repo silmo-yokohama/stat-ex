@@ -35,14 +35,18 @@ export type PlayerSeasonAverage = {
 // ================================================
 
 /**
- * 選手一覧を取得する（ポジションフィルタ対応）
+ * EX選手一覧を取得する（ポジションフィルタ対応）
+ *
+ * player_seasons.is_active=true のEX選手のみ返す。
+ * 対戦相手の選手は含めない。
  */
 export async function getPlayers(position?: string): Promise<PlayerWithSeason[]> {
   const supabase = await createClient();
 
   let query = supabase
     .from("players")
-    .select("*, player_seasons(*)")
+    .select("*, player_seasons!inner(*)")
+    .eq("player_seasons.is_active", true)
     .order("number", { ascending: true });
 
   // ポジションフィルタ
