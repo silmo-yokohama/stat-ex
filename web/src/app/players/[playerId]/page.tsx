@@ -107,7 +107,10 @@ export default async function PlayerDetailPage({ params }: Props) {
     : [];
 
   // ゲームログチャート用データ: 対戦相手名と得点・勝敗
-  const gameLogData = gameLog.map((g) => ({
+  // getPlayerGameLogは新しい順で返すため、reverseで時系列順（古い→新しい）にする
+  // 直近15試合に絞ってチャートの視認性を確保
+  const recentGames = gameLog.slice(0, 15).reverse();
+  const gameLogData = recentGames.map((g) => ({
     label: g.opponent_name ?? "不明",
     pts: g.pts,
     result: g.result?.startsWith("W") ? "W" : "L",
