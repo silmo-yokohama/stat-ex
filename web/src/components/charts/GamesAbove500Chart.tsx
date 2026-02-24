@@ -3,17 +3,19 @@
 /**
  * ペナントレースチャート（貯金/借金シーズン推移）
  *
- * B2リーグ全チームの貯金/借金推移を折れ線グラフで可視化する。
+ * B2リーグの貯金/借金推移を折れ線グラフで可視化する。
  * 野球のペナントレースチャートと同じコンセプト。
  *
  * - 横軸: 試合数（1, 2, 3, ...）
  * - 縦軸: 貯金/借金数 = (累積勝数 - 累積敗数) / 2
+ * - 横浜EXの所属地区をデフォルト表示
  * - 横浜EX: 太い緑色の実線（実際の試合データから計算）
  * - 東地区チーム: 青系の線
  * - 西地区チーム: 暖色系の線
  * - 0ライン（.500基準）を ReferenceLine で明示
  *
- * タブで「全チーム」「東地区」「西地区」を切り替え可能。
+ * タブで「東地区」「西地区」を切り替え。
+ * 横浜EXの線は自分の所属地区のみに表示する。
  */
 
 import { useState } from "react";
@@ -50,9 +52,6 @@ type Props = {
   teams: PennantRaceTeam[];
 };
 
-/** タブのフィルタ選択肢 */
-type DivisionFilter = "全チーム" | "東地区" | "西地区";
-
 // ================================================
 // 定数
 // ================================================
@@ -85,13 +84,6 @@ const WEST_PALETTE = [
   "#F59E0B", // アンバー
   "#A855F7", // バイオレット
   "#78716C", // ストーン
-];
-
-/** タブ選択肢 */
-const FILTER_TABS: { label: string; value: DivisionFilter }[] = [
-  { label: "全チーム", value: "全チーム" },
-  { label: "東地区", value: "東地区" },
-  { label: "西地区", value: "西地区" },
 ];
 
 /** ツールチップの共通スタイル */
@@ -151,7 +143,7 @@ function PennantTooltip({
         第{label}試合
       </p>
 
-      {/* 横浜EX（常に先頭・太字・グリーン） */}
+      {/* 横浜EX（先頭・太字・グリーン） */}
       {exEntry && (
         <div
           style={{
@@ -196,22 +188,34 @@ function PennantTooltip({
 /**
  * ペナントレースチャート
  *
- * 全チームの貯金/借金推移を折れ線で重ねて表示する。
- * 横浜EXは太い緑色でハイライト、東地区は青系、西地区は暖色系で色分け。
- * タブで地区別にフィルタリング可能。
+ * 地区別にチームの貯金/借金推移を折れ線で表示する。
+ * 横浜EXの所属地区をデフォルトタブとし、
+ * 他地区のタブでは横浜EXの線を含めない。
  *
  * @param teams - 全チームの推移データ（地区情報付き）
  */
 export function GamesAbove500Chart({ teams }: Props) {
-  const [filter, setFilter] = useState<DivisionFilter>("全チーム");
+  // 横浜EXの所属地区をデータから動的に判定（シーズンごとに変わる可能性に対応）
+  const exTeam = teams.find((t) => t.isExcellence);
+  const exDivision: B2Division = exTeam?.division ?? "東地区";
+
+  const [filter, setFilter] = useState<B2Division>(exDivision);
+
+  // タブ選択肢（地区のみ）
+  const filterTabs: { label: string; value: B2Division }[] = [
+    { label: "東地区", value: "東地区" },
+    { label: "西地区", value: "西地区" },
+  ];
 
   // フィルタに応じてチームを絞り込む
+  // 横浜EXは自分の所属地区のみに表示する
   const filteredTeams = teams.filter((t) => {
-    if (filter === "全チーム") return true;
-    // 横浜EXは常に表示
-    if (t.isExcellence) return true;
+    if (t.isExcellence) return filter === exDivision;
     return t.division === filter;
   });
+
+  // 現在のタブがEXの所属地区かどうか
+  const isExDivision = filter === exDivision;
 
   // Recharts用のフラットデータ構造に変換
   // 各データポイント: { game: 1, "横浜EX": 0.5, "信州": 0.29, ... }
@@ -229,28 +233,23 @@ export function GamesAbove500Chart({ teams }: Props) {
   }
 
   // 横浜EXと他チームを分離（横浜EXを最後にレンダリング → 最前面に表示）
-  const exTeam = filteredTeams.find((t) => t.isExcellence);
+  const visibleEx = isExDivision ? filteredTeams.find((t) => t.isExcellence) : undefined;
   const otherTeams = filteredTeams.filter((t) => !t.isExcellence);
 
-  // 地区別に色を割り当て（東=青系、西=暖色系）
+  // 地区別に色を割り当て
   const teamColorMap: Record<string, string> = {};
-  let eastIdx = 0;
-  let westIdx = 0;
+  const palette = filter === "東地区" ? EAST_PALETTE : WEST_PALETTE;
+  let colorIdx = 0;
   for (const t of otherTeams) {
-    if (t.division === "東地区") {
-      teamColorMap[t.teamName] = EAST_PALETTE[eastIdx % EAST_PALETTE.length];
-      eastIdx++;
-    } else {
-      teamColorMap[t.teamName] = WEST_PALETTE[westIdx % WEST_PALETTE.length];
-      westIdx++;
-    }
+    teamColorMap[t.teamName] = palette[colorIdx % palette.length];
+    colorIdx++;
   }
 
   return (
     <div>
       {/* 地区フィルタタブ */}
       <div className="mb-4 flex gap-2">
-        {FILTER_TABS.map((tab) => (
+        {filterTabs.map((tab) => (
           <button
             key={tab.value}
             onClick={() => setFilter(tab.value)}
@@ -287,7 +286,7 @@ export function GamesAbove500Chart({ teams }: Props) {
           />
 
           {/* ツールチップ */}
-          <Tooltip content={<PennantTooltip exTeamName={exTeam?.teamName} />} />
+          <Tooltip content={<PennantTooltip exTeamName={visibleEx?.teamName} />} />
 
           {/* .500ライン（基準線） */}
           <ReferenceLine
@@ -317,11 +316,11 @@ export function GamesAbove500Chart({ teams }: Props) {
             />
           ))}
 
-          {/* 横浜EXの線（最後にレンダリング → 最前面に表示） */}
-          {exTeam && (
+          {/* 横浜EXの線（最後にレンダリング → 最前面に表示、所属地区のみ） */}
+          {visibleEx && (
             <Line
               type="monotone"
-              dataKey={exTeam.teamName}
+              dataKey={visibleEx.teamName}
               stroke={COLOR_EX}
               strokeWidth={3}
               dot={false}
