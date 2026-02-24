@@ -20,6 +20,8 @@ type PlayerRadarData = {
   stat: string;
   /** 0〜100 にスケーリング済みの値 */
   value: number;
+  /** 元の実数値（ツールチップ表示用） */
+  rawValue: number;
   /** 最大値（常に100） */
   fullMark: number;
 };

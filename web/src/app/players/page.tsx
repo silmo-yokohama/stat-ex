@@ -4,6 +4,8 @@ import { getPlayers } from "@/lib/data";
 import { getAllPlayerAverages } from "@/lib/data/players";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/Icon";
+import { ChartHelpButton } from "@/components/ui/ChartHelpButton";
+import { CHART_HELP } from "@/lib/glossary";
 import { PlayersScatterChart } from "@/components/players/PlayerCharts";
 import { PlayerAvatar } from "@/components/players/PlayerAvatar";
 import type { Player, PlayerWithSeason } from "@/lib/types/database";
@@ -163,11 +165,14 @@ export default async function PlayersPage() {
 
       {/* スタッツ分布チャート */}
       <section className="rounded-xl border border-border bg-card p-6">
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+        <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
           <Icon name="scatter_plot" size={20} className="text-primary" />
           スタッツ分布
+          <ChartHelpButton details={CHART_HELP.playerScatter.details} />
         </h2>
-        <p className="mb-2 text-xs text-muted-foreground">PPG vs RPG（バブルサイズ = APG）</p>
+        <p className="mb-4 text-xs text-muted-foreground">
+          {CHART_HELP.playerScatter.summary}
+        </p>
         <PlayersScatterChart data={scatterData} />
       </section>
 

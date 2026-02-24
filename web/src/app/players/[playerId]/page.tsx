@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPlayerById, getPlayerAverage, getPlayerGameLog } from "@/lib/data";
 import { getCurrentSeasonName } from "@/lib/constants";
+import { CHART_HELP, PLAYER_STATS } from "@/lib/glossary";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/Icon";
 import { Separator } from "@/components/ui/separator";
+import { ChartHelpButton } from "@/components/ui/ChartHelpButton";
 import { PlayerAbilityRadar, PlayerGameLogChart } from "@/components/players/PlayerCharts";
 import { PlayerAvatar } from "@/components/players/PlayerAvatar";
+import { GameLogTable } from "@/components/players/GameLogTable";
 
 /** ページProps型（Next.js 16のPromise params） */
 type Props = {
@@ -52,12 +55,24 @@ const POSITION_BADGE_COLORS: Record<string, string> = {
  *
  * @param label - スタッツのラベル（例: "FG%"）
  * @param value - パーセンテージ値（0〜100）
+ * @param description - 初心者向けの用語説明（ヘルプボタンで表示）
  */
-function ShootingBar({ label, value }: { label: string; value: number }) {
+function ShootingBar({
+  label,
+  value,
+  description,
+}: {
+  label: string;
+  value: number;
+  description?: string;
+}) {
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-foreground">{label}</span>
+        <span className="flex items-center gap-1 font-medium text-foreground">
+          {label}
+          {description && <ChartHelpButton details={description} />}
+        </span>
         <span className="font-display text-base">{value.toFixed(1)}%</span>
       </div>
       <div className="h-3 w-full overflow-hidden rounded-full bg-gray-100">
@@ -96,13 +111,14 @@ export default async function PlayerDetailPage({ params }: Props) {
   }
 
   // レーダーチャート用データ: 各スタッツを0-100にスケーリング（チーム内相対評価）
+  // rawValue に元の実数値を保持し、ツールチップで表示する
   const radarData = average
     ? [
-        { stat: "得点", value: Math.min((average.ppg / 25) * 100, 100), fullMark: 100 },
-        { stat: "リバウンド", value: Math.min((average.rpg / 10) * 100, 100), fullMark: 100 },
-        { stat: "アシスト", value: Math.min((average.apg / 8) * 100, 100), fullMark: 100 },
-        { stat: "スティール", value: Math.min((average.spg / 2.5) * 100, 100), fullMark: 100 },
-        { stat: "効率", value: Math.min((average.eff / 25) * 100, 100), fullMark: 100 },
+        { stat: "得点", value: Math.min((average.ppg / 25) * 100, 100), rawValue: average.ppg, fullMark: 100 },
+        { stat: "リバウンド", value: Math.min((average.rpg / 10) * 100, 100), rawValue: average.rpg, fullMark: 100 },
+        { stat: "アシスト", value: Math.min((average.apg / 8) * 100, 100), rawValue: average.apg, fullMark: 100 },
+        { stat: "スティール", value: Math.min((average.spg / 2.5) * 100, 100), rawValue: average.spg, fullMark: 100 },
+        { stat: "効率", value: Math.min((average.eff / 25) * 100, 100), rawValue: average.eff, fullMark: 100 },
       ]
     : [];
 
@@ -176,15 +192,20 @@ export default async function PlayerDetailPage({ params }: Props) {
            * アクセントカラーとフェードインアニメーション付き
            * ================================================ */}
           <section>
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+            <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
               <Icon name="star" size={20} className="text-primary" />
               Season Average
+              <ChartHelpButton details={CHART_HELP.seasonAverage.details} />
             </h2>
+            <p className="mb-4 text-xs text-muted-foreground">
+              {CHART_HELP.seasonAverage.summary}
+            </p>
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <SeasonAverageCard
                 label="PPG"
                 value={average.ppg.toFixed(1)}
                 sublabel="得点"
+                description={PLAYER_STATS.PPG.shortDesc}
                 accentClass="stat-card-green"
                 animationClass="animate-fade-in-up delay-1"
               />
@@ -192,6 +213,7 @@ export default async function PlayerDetailPage({ params }: Props) {
                 label="RPG"
                 value={average.rpg.toFixed(1)}
                 sublabel="リバウンド"
+                description={PLAYER_STATS.RPG.shortDesc}
                 accentClass="stat-card-emerald"
                 animationClass="animate-fade-in-up delay-2"
               />
@@ -199,6 +221,7 @@ export default async function PlayerDetailPage({ params }: Props) {
                 label="APG"
                 value={average.apg.toFixed(1)}
                 sublabel="アシスト"
+                description={PLAYER_STATS.APG.shortDesc}
                 accentClass="stat-card-teal"
                 animationClass="animate-fade-in-up delay-3"
               />
@@ -206,6 +229,7 @@ export default async function PlayerDetailPage({ params }: Props) {
                 label="FG%"
                 value={`${average.fg_pct.toFixed(1)}%`}
                 sublabel="フィールドゴール"
+                description={PLAYER_STATS["FG%"].shortDesc}
                 accentClass="stat-card-indigo"
                 animationClass="animate-fade-in-up delay-4"
               />
@@ -218,17 +242,25 @@ export default async function PlayerDetailPage({ params }: Props) {
            * ================================================ */}
           <section className="grid gap-4 md:grid-cols-2">
             <div className="rounded-xl border border-border bg-card p-6">
-              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+              <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
                 <Icon name="radar" size={20} className="text-primary" />
                 選手能力
+                <ChartHelpButton details={CHART_HELP.playerRadar.details} />
               </h2>
+              <p className="mb-4 text-xs text-muted-foreground">
+                {CHART_HELP.playerRadar.summary}
+              </p>
               <PlayerAbilityRadar data={radarData} />
             </div>
             <div className="rounded-xl border border-border bg-card p-6">
-              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+              <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
                 <Icon name="show_chart" size={20} className="text-primary" />
                 直近試合の得点推移
+                <ChartHelpButton details={CHART_HELP.gameLog.details} />
               </h2>
+              <p className="mb-4 text-xs text-muted-foreground">
+                {CHART_HELP.gameLog.summary}
+              </p>
               {gameLogData.length > 0 ? (
                 <PlayerGameLogChart data={gameLogData} averagePts={average.ppg} />
               ) : (
@@ -244,14 +276,18 @@ export default async function PlayerDetailPage({ params }: Props) {
            * FG%, 3P%, FT%を水平プログレスバーで表示
            * ================================================ */}
           <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+            <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
               <Icon name="gps_fixed" size={20} className="text-primary" />
               Shooting Split
+              <ChartHelpButton details={CHART_HELP.shootingSplit.details} />
             </h2>
+            <p className="mb-4 text-xs text-muted-foreground">
+              {CHART_HELP.shootingSplit.summary}
+            </p>
             <div className="space-y-4">
-              <ShootingBar label="FG%" value={average.fg_pct} />
-              <ShootingBar label="3P%" value={average.tp_pct} />
-              <ShootingBar label="FT%" value={average.ft_pct} />
+              <ShootingBar label="FG%" value={average.fg_pct} description={PLAYER_STATS["FG%"].description} />
+              <ShootingBar label="3P%" value={average.tp_pct} description={PLAYER_STATS["3P%"].description} />
+              <ShootingBar label="FT%" value={average.ft_pct} description={PLAYER_STATS["FT%"].description} />
             </div>
           </section>
 
@@ -260,20 +296,43 @@ export default async function PlayerDetailPage({ params }: Props) {
            * 試合数、MPG、SPG、BPG、TOPG、EFFを一覧表示
            * ================================================ */}
           <section className="rounded-xl border border-border bg-card p-6">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+            <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
               <Icon name="analytics" size={20} className="text-primary" />
               Stats Summary
+              <ChartHelpButton details={CHART_HELP.statsSummary.details} />
             </h2>
+            <p className="mb-4 text-xs text-muted-foreground">
+              {CHART_HELP.statsSummary.summary}
+            </p>
             <Separator className="mb-4" />
             <div className="grid grid-cols-3 gap-4 md:grid-cols-6">
               <StatsSummaryItem label="試合数" value={String(average.games_played)} />
-              <StatsSummaryItem label="MPG" value={average.mpg} />
-              <StatsSummaryItem label="SPG" value={average.spg.toFixed(1)} />
-              <StatsSummaryItem label="BPG" value={average.bpg.toFixed(1)} />
-              <StatsSummaryItem label="TOPG" value={average.topg.toFixed(1)} />
-              <StatsSummaryItem label="EFF" value={average.eff.toFixed(1)} />
+              <StatsSummaryItem label="MPG" value={average.mpg} description={PLAYER_STATS.MPG.description} />
+              <StatsSummaryItem label="SPG" value={average.spg.toFixed(1)} description={PLAYER_STATS.SPG.description} />
+              <StatsSummaryItem label="BPG" value={average.bpg.toFixed(1)} description={PLAYER_STATS.BPG.description} />
+              <StatsSummaryItem label="TOPG" value={average.topg.toFixed(1)} description={PLAYER_STATS.TOPG.description} />
+              <StatsSummaryItem label="EFF" value={average.eff.toFixed(1)} description={PLAYER_STATS.EFF.description} />
             </div>
           </section>
+
+          {/* ================================================
+           * セクション6: 試合別スタッツ（ゲームログ）
+           * 全試合のボックススコアを新しい順で一覧表示
+           * カラムヘッダークリックでソート切替可能
+           * ================================================ */}
+          {gameLog.length > 0 && (
+            <section className="rounded-xl border border-border bg-card p-6">
+              <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
+                <Icon name="format_list_numbered" size={20} className="text-primary" />
+                Game Log
+                <ChartHelpButton details={CHART_HELP.gameLogTable.details} />
+              </h2>
+              <p className="mb-4 text-xs text-muted-foreground">
+                {CHART_HELP.gameLogTable.summary}
+              </p>
+              <GameLogTable data={gameLog} />
+            </section>
+          )}
         </>
       )}
     </div>
@@ -289,6 +348,7 @@ export default async function PlayerDetailPage({ params }: Props) {
  * @param label - スタッツの英略称（例: "PPG"）
  * @param value - 表示する値（フォーマット済み文字列）
  * @param sublabel - 日本語のスタッツ名（例: "得点"）
+ * @param description - スタッツの簡潔な説明（カード下部に表示）
  * @param accentClass - カード上辺のアクセントカラークラス（例: "stat-card-green"）
  * @param animationClass - アニメーションクラス（例: "animate-fade-in-up delay-1"）
  */
@@ -296,12 +356,14 @@ function SeasonAverageCard({
   label,
   value,
   sublabel,
+  description,
   accentClass,
   animationClass,
 }: {
   label: string;
   value: string;
   sublabel: string;
+  description?: string;
   accentClass?: string;
   animationClass?: string;
 }) {
@@ -312,6 +374,9 @@ function SeasonAverageCard({
       <p className="text-xs text-muted-foreground">{sublabel}</p>
       <p className="font-display text-3xl leading-tight text-[#006d3b]">{value}</p>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      {description && (
+        <p className="mt-1 text-[10px] text-muted-foreground/70">{description}</p>
+      )}
     </div>
   );
 }
@@ -320,14 +385,27 @@ function SeasonAverageCard({
  * スタッツサマリーアイテム
  *
  * ラベルと値を縦に並べて表示する小型コンポーネント。
+ * ヘルプボタンで用語説明を確認できる。
  *
  * @param label - スタッツラベル
  * @param value - 値（フォーマット済み文字列）
+ * @param description - 初心者向けの用語説明（ヘルプボタンで表示）
  */
-function StatsSummaryItem({ label, value }: { label: string; value: string }) {
+function StatsSummaryItem({
+  label,
+  value,
+  description,
+}: {
+  label: string;
+  value: string;
+  description?: string;
+}) {
   return (
     <div className="text-center">
-      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="flex items-center justify-center gap-0.5 text-xs text-muted-foreground">
+        {label}
+        {description && <ChartHelpButton details={description} />}
+      </p>
       <p className="font-display text-xl leading-tight">{value}</p>
     </div>
   );

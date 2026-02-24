@@ -28,7 +28,9 @@ import {
 import { getScoreTrend, getCurrentStreak, isWin, getExScore, getOppScore } from "@/lib/data/games";
 import { buildPennantRaceData } from "@/lib/data/pennant-race";
 
+import { CHART_HELP } from "@/lib/glossary";
 import { Badge } from "@/components/ui/badge";
+import { ChartHelpButton } from "@/components/ui/ChartHelpButton";
 import { ScoreTrendChart } from "@/components/charts/ScoreTrendChart";
 import { GamesAbove500Chart } from "@/components/charts/GamesAbove500Chart";
 import { DashboardHomeAwayDonut } from "@/components/dashboard/DashboardCharts";
@@ -350,10 +352,14 @@ export default async function Home() {
       <section className="grid gap-4 md:grid-cols-3">
         {/* 得点推移グラフ */}
         <div className="rounded-xl border border-border bg-card p-6">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+          <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold text-foreground">
             <Icon name="show_chart" size={20} className="text-primary" />
             直近10試合 得点推移
+            <ChartHelpButton details={CHART_HELP.scoreTrend.details} />
           </h2>
+          <p className="mb-4 text-xs text-muted-foreground">
+            {CHART_HELP.scoreTrend.summary}
+          </p>
           {trendData.length > 0 ? (
             <ScoreTrendChart data={trendData} />
           ) : (
@@ -365,10 +371,14 @@ export default async function Home() {
 
         {/* ホーム／アウェイ勝率ドーナツ（中央） */}
         <div className="rounded-xl border border-border bg-card p-6">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+          <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold text-foreground">
             <Icon name="pie_chart" size={20} className="text-primary" />
             H/A 勝率
+            <ChartHelpButton details={CHART_HELP.homeAwayDonut.details} />
           </h2>
+          <p className="mb-4 text-xs text-muted-foreground">
+            {CHART_HELP.homeAwayDonut.summary}
+          </p>
           <DashboardHomeAwayDonut
             homeWins={teamStats.home_wins}
             homeLosses={teamStats.home_losses}
@@ -417,10 +427,14 @@ export default async function Home() {
        * 全チームのシーズン推移を折れ線で可視化
        * ======================================== */}
       <section className="rounded-xl border border-border bg-card p-6">
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+        <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold text-foreground">
           <Icon name="trending_up" size={20} className="text-primary" />
           B2 ペナントレース
+          <ChartHelpButton details={CHART_HELP.gamesAbove500.details} />
         </h2>
+        <p className="mb-4 text-xs text-muted-foreground">
+          {CHART_HELP.gamesAbove500.summary}
+        </p>
         {pennantRaceData.length > 0 ? (
           <GamesAbove500Chart teams={pennantRaceData} />
         ) : (

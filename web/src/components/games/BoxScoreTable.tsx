@@ -287,9 +287,7 @@ export function BoxScoreTable({ boxScores, isExHome, homeName, awayName }: Props
               return (
                 <TableRow
                   key={bs.id}
-                  className={`${isFirstBench ? "border-t-2 border-border" : ""} ${
-                    index % 2 === 1 ? "bg-muted/50" : ""
-                  }`}
+                  className={isFirstBench ? "border-t-2 border-border" : ""}
                 >
                   <TableCell className={`text-center ${rowClass}`}>
                     {bs.player.number ?? "-"}

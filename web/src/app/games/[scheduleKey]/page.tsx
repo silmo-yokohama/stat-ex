@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
+import { ChartHelpButton } from "@/components/ui/ChartHelpButton";
+import { CHART_HELP } from "@/lib/glossary";
 
 import { TEAM } from "@/lib/constants";
 import { getGameDetail } from "@/lib/data";
@@ -345,7 +347,7 @@ function Scoreboard({
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="[&>tr:nth-child(even)]:bg-muted/30">
               {/* ホーム行 */}
               <tr className="border-b border-border">
                 <td className="py-1.5 text-xs font-medium text-foreground">{homeName}</td>
@@ -521,10 +523,14 @@ export default async function GameDetailPage({ params }: Props) {
           {game.q1_home !== null && (
             <section className="grid gap-4 md:grid-cols-2">
               <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+                <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
                   <Icon name="bar_chart" size={20} className="text-primary" />
                   Q別得点比較
+                  <ChartHelpButton details={CHART_HELP.quarterChart.details} />
                 </h2>
+                <p className="mb-4 text-xs text-muted-foreground">
+                  {CHART_HELP.quarterChart.summary}
+                </p>
                 <GameQuarterChart
                   data={quarterChartData}
                   homeTeamName={homeName}
@@ -532,10 +538,14 @@ export default async function GameDetailPage({ params }: Props) {
                 />
               </div>
               <div className="rounded-xl border border-border bg-card p-6">
-                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+                <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
                   <Icon name="show_chart" size={20} className="text-primary" />
                   スコア推移
+                  <ChartHelpButton details={CHART_HELP.scoreFlow.details} />
                 </h2>
+                <p className="mb-4 text-xs text-muted-foreground">
+                  {CHART_HELP.scoreFlow.summary}
+                </p>
                 <GameScoreFlowChart
                   data={scoreFlowData}
                   homeTeamName={homeName}

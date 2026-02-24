@@ -16,17 +16,12 @@ import {
   TeamHomeAwayDonut,
   TeamCumulativeWins,
 } from "@/components/team/TeamCharts";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { Icon } from "@/components/ui/Icon";
+import { ChartHelpButton } from "@/components/ui/ChartHelpButton";
+import { CHART_HELP, TEAM_STATS } from "@/lib/glossary";
 import { GamesAbove500Chart } from "@/components/charts/GamesAbove500Chart";
+import { H2HTable } from "@/components/team/H2HTable";
 import { buildPennantRaceData } from "@/lib/data/pennant-race";
 import { TEAM } from "@/lib/constants";
 import type { Game } from "@/lib/types/database";
@@ -133,6 +128,7 @@ export default async function TeamPage() {
             label="Win%"
             value={teamStats.win_pct !== null ? `${teamStats.win_pct.toFixed(1)}%` : "-"}
             sublabel="勝率"
+            description={TEAM_STATS["Win%"].shortDesc}
             accentClass="stat-card-emerald"
             animationClass="animate-fade-in-up delay-2"
           />
@@ -140,6 +136,7 @@ export default async function TeamPage() {
             label="PF"
             value={teamStats.avg_points_for !== null ? teamStats.avg_points_for.toFixed(1) : "-"}
             sublabel="平均得点"
+            description={TEAM_STATS.PF.shortDesc}
             accentClass="stat-card-teal"
             animationClass="animate-fade-in-up delay-3"
           />
@@ -149,6 +146,7 @@ export default async function TeamPage() {
               teamStats.avg_points_against !== null ? teamStats.avg_points_against.toFixed(1) : "-"
             }
             sublabel="平均失点"
+            description={TEAM_STATS.PA.shortDesc}
             accentClass="stat-card-indigo"
             animationClass="animate-fade-in-up delay-4"
           />
@@ -160,10 +158,14 @@ export default async function TeamPage() {
        * 勝敗カード2枚 + ドーナツチャート
        * ================================================ */}
       <section>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+        <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
           <Icon name="compare_arrows" size={20} className="text-primary" />
           Home vs Away
+          <ChartHelpButton details={CHART_HELP.homeAwayDonut.details} />
         </h2>
+        <p className="mb-4 text-xs text-muted-foreground">
+          {CHART_HELP.homeAwayDonut.summary}
+        </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* ホーム成績カード（薄いグリーングラデーション背景） */}
           <div className="section-gradient rounded-xl border border-border p-6">
@@ -224,10 +226,14 @@ export default async function TeamPage() {
        * 月ごとの勝敗を積み上げ棒グラフで表示
        * ================================================ */}
       <section>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+        <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
           <Icon name="calendar_month" size={20} className="text-primary" />
           月別成績
+          <ChartHelpButton details={CHART_HELP.monthlyRecord.details} />
         </h2>
+        <p className="mb-4 text-xs text-muted-foreground">
+          {CHART_HELP.monthlyRecord.summary}
+        </p>
         <TeamMonthlyChart data={monthlyRecord} />
       </section>
 
@@ -236,10 +242,14 @@ export default async function TeamPage() {
        * クォーターごとの平均得点・失点をレーダーチャートで表示
        * ================================================ */}
       <section>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+        <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
           <Icon name="radar" size={20} className="text-primary" />
           Q別得点傾向
+          <ChartHelpButton details={CHART_HELP.quarterRadar.details} />
         </h2>
+        <p className="mb-4 text-xs text-muted-foreground">
+          {CHART_HELP.quarterRadar.summary}
+        </p>
         <TeamQuarterRadar data={quarterTrend} />
       </section>
 
@@ -248,10 +258,14 @@ export default async function TeamPage() {
        * 累積勝利数と理想ペース（勝率60%）の比較チャート
        * ================================================ */}
       <section>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+        <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
           <Icon name="trending_up" size={20} className="text-primary" />
           シーズン推移
+          <ChartHelpButton details={CHART_HELP.cumulativeWins.details} />
         </h2>
+        <p className="mb-4 text-xs text-muted-foreground">
+          {CHART_HELP.cumulativeWins.summary}
+        </p>
         <TeamCumulativeWins data={cumulativeWinsData} />
       </section>
 
@@ -260,10 +274,14 @@ export default async function TeamPage() {
        * 全チームのシーズン推移を折れ線グラフで可視化
        * ================================================ */}
       <section>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+        <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
           <Icon name="trending_up" size={20} className="text-primary" />
           B2 ペナントレース
+          <ChartHelpButton details={CHART_HELP.gamesAbove500.details} />
         </h2>
+        <p className="mb-4 text-xs text-muted-foreground">
+          {CHART_HELP.gamesAbove500.summary}
+        </p>
         <div className="rounded-xl border border-border bg-card p-6">
           {pennantRaceData.length > 0 ? (
             <GamesAbove500Chart teams={pennantRaceData} />
@@ -281,43 +299,16 @@ export default async function TeamPage() {
        * 勝敗差の大きい順にソート済み
        * ================================================ */}
       <section>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+        <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
           <Icon name="swap_horiz" size={20} className="text-primary" />
           H2H 対戦成績
+          <ChartHelpButton details={CHART_HELP.h2h.details} />
         </h2>
+        <p className="mb-4 text-xs text-muted-foreground">
+          {CHART_HELP.h2h.summary}
+        </p>
         <div className="rounded-xl border border-border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>対戦相手</TableHead>
-                <TableHead className="text-center">W</TableHead>
-                <TableHead className="text-center">L</TableHead>
-                <TableHead className="text-center">Avg PF</TableHead>
-                <TableHead className="text-center">Avg PA</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {h2hRecords.map((record) => (
-                <TableRow key={record.id}>
-                  <TableCell className="font-medium">{record.opponent_name}</TableCell>
-                  <TableCell className="text-center text-[#006d3b] font-semibold">
-                    {record.wins}
-                  </TableCell>
-                  <TableCell className="text-center text-[#9CA3AF] font-semibold">
-                    {record.losses}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {record.avg_points_for !== null ? record.avg_points_for.toFixed(1) : "-"}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {record.avg_points_against !== null
-                      ? record.avg_points_against.toFixed(1)
-                      : "-"}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <H2HTable data={h2hRecords} />
         </div>
       </section>
 
@@ -376,6 +367,7 @@ export default async function TeamPage() {
  * @param label - 英略称（例: "W-L", "Win%"）
  * @param value - 表示する値（フォーマット済み文字列）
  * @param sublabel - 日本語ラベル（例: "勝敗"）
+ * @param description - スタッツの簡潔な説明（カード下部に表示）
  * @param accentClass - 上辺アクセントカラーのCSSクラス（例: "stat-card-green"）
  * @param animationClass - アニメーション用のCSSクラス（例: "animate-fade-in-up delay-1"）
  */
@@ -383,12 +375,14 @@ function SummaryCard({
   label,
   value,
   sublabel,
+  description,
   accentClass,
   animationClass,
 }: {
   label: string;
   value: string;
   sublabel: string;
+  description?: string;
   accentClass: string;
   animationClass: string;
 }) {
@@ -399,6 +393,9 @@ function SummaryCard({
       <p className="text-xs text-muted-foreground">{sublabel}</p>
       <p className="font-display text-3xl leading-tight text-[#006d3b]">{value}</p>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      {description && (
+        <p className="mt-1 text-[10px] text-muted-foreground/70">{description}</p>
+      )}
     </div>
   );
 }
