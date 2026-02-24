@@ -6,7 +6,7 @@
  */
 import { ImageResponse } from "next/og";
 
-export const alt = "STAT-EX - 横浜エクセレンス 情報ダッシュボード";
+export const alt = "EXDB - 横浜エクセレンス 情報ダッシュボード";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -24,17 +24,19 @@ export default function OGImage() {
         fontFamily: "sans-serif",
       }}
     >
-      {/* サイト名 */}
+      {/* サイト名: EXだけ緑背景で強調 */}
       <div
         style={{
+          display: "flex",
+          alignItems: "center",
           fontSize: "120px",
           fontWeight: 900,
-          color: "white",
           letterSpacing: "4px",
           marginBottom: "16px",
         }}
       >
-        STAT-EX
+        <span style={{ color: "white" }}>EX</span>
+        <span style={{ color: "rgba(255,255,255,0.7)" }}>DB</span>
       </div>
 
       {/* 区切り線 */}

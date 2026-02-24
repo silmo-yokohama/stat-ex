@@ -43,8 +43,8 @@ export function Header() {
                 isMenuOpen ? "text-white" : ""
               }`}
             >
-              <span className={isMenuOpen ? "text-white" : "text-foreground"}>STAT</span>
-              <span className={isMenuOpen ? "text-white/70" : "text-primary"}>-EX</span>
+              <span className={isMenuOpen ? "text-white" : "text-primary"}>EX</span>
+              <span className={isMenuOpen ? "text-white/70" : "text-foreground"}>DB</span>
             </span>
             <span
               className={`hidden text-[10px] font-medium tracking-widest uppercase sm:inline transition-colors duration-300 ${

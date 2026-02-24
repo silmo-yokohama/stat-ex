@@ -1,10 +1,10 @@
 /**
- * STAT-EX 定数定義
+ * EXDB 定数定義
  */
 
 /** サイト情報 */
 export const SITE = {
-  name: "STAT-EX",
+  name: "EXDB",
   description: "横浜エクセレンス 情報ダッシュボード",
   concept: "横浜EX データベース",
 } as const;

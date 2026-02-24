@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 // ================================================
 
 const BLEAGUE_BASE_URL = "https://www.bleague.jp";
-const USER_AGENT = "STAT-EX/1.0 (+https://stat-ex.vercel.app)";
+const USER_AGENT = "EXDB/1.0 (+https://stat-ex.vercel.app)";
 
 /**
  * リクエストタイムアウト（ミリ秒）
@@ -253,7 +253,7 @@ function extractGameDataFromHtml(html: string): Record<string, unknown> | null {
 /**
  * ボックススコア配列をパースする
  *
- * B.LEAGUE APIのフィールド名をSTAT-EXのカラム名にマッピングする。
+ * B.LEAGUE APIのフィールド名をEXDBのカラム名にマッピングする。
  */
 function parseBoxScores(boxScores: unknown[], teamSide: "home" | "away"): LiveBoxScore[] {
   const result: LiveBoxScore[] = [];
