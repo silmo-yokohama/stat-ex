@@ -5,6 +5,7 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentSeasonId } from "./season";
 import type { TeamStats, Standing, H2HRecord, Injury, Game, Player } from "@/lib/types/database";
 
 // ================================================
@@ -45,8 +46,15 @@ const DEFAULT_TEAM_STATS: TeamStats = {
  */
 export async function getTeamStats(): Promise<TeamStats> {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
-  const { data, error } = await supabase.from("team_stats").select("*").limit(1).single();
+  let query = supabase.from("team_stats").select("*");
+
+  if (seasonId) {
+    query = query.eq("season_id", seasonId);
+  }
+
+  const { data, error } = await query.limit(1).single();
 
   if (error || !data) return DEFAULT_TEAM_STATS;
   return data as unknown as TeamStats;
@@ -59,11 +67,16 @@ export async function getStandings(): Promise<
   (Standing & { team_name: string; short_name: string })[]
 > {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("standings")
     .select("*, team:teams(name, short_name)")
     .order("rank", { ascending: true });
+
+  if (seasonId) query = query.eq("season_id", seasonId);
+
+  const { data, error } = await query;
 
   if (error || !data) return [];
 
@@ -83,10 +96,15 @@ export async function getH2HRecords(): Promise<
   (H2HRecord & { opponent_name: string; short_name: string })[]
 > {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("h2h_records")
     .select("*, opponent:teams!opponent_team_id(name, short_name)");
+
+  if (seasonId) query = query.eq("season_id", seasonId);
+
+  const { data, error } = await query;
 
   if (error || !data) return [];
 
@@ -133,13 +151,21 @@ export async function getInjuries(): Promise<
  */
 export async function getTeamLeaders(): Promise<TeamLeader[]> {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
   // EX選手（is_active=true）のボックススコアのみを取得
   // players → player_seasons の INNER JOIN でEX選手に絞る
-  const { data, error } = await supabase
+  let query = supabase
     .from("box_scores")
     .select("player_id, pts, reb, ast, player:players!inner(*, player_seasons!inner(*))")
     .eq("player.player_seasons.is_active", true);
+
+  // player_seasons のシーズンでも絞り込む
+  if (seasonId) {
+    query = query.eq("player.player_seasons.season_id", seasonId);
+  }
+
+  const { data, error } = await query;
 
   if (error || !data || data.length === 0) return [];
 
@@ -218,11 +244,16 @@ export async function getMonthlyRecord(): Promise<
   { month: string; wins: number; losses: number }[]
 > {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("games")
     .select("game_date, home_away, score_home, score_away")
     .eq("status", "FINAL");
+
+  if (seasonId) query = query.eq("season_id", seasonId);
+
+  const { data, error } = await query;
 
   if (error || !data) return [];
 
@@ -251,12 +282,17 @@ export async function getQuarterTrend(): Promise<
   { quarter: string; avgFor: number; avgAgainst: number }[]
 > {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("games")
     .select("home_away, q1_home, q1_away, q2_home, q2_away, q3_home, q3_away, q4_home, q4_away")
     .eq("status", "FINAL")
     .not("q1_home", "is", null);
+
+  if (seasonId) query = query.eq("season_id", seasonId);
+
+  const { data, error } = await query;
 
   if (error || !data || data.length === 0) return [];
 

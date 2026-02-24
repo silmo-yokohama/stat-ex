@@ -9,6 +9,7 @@ import {
   getGames,
 } from "@/lib/data";
 import { isWin } from "@/lib/data/games";
+import { getCurrentSeasonName } from "@/lib/constants";
 import {
   TeamMonthlyChart,
   TeamQuarterRadar,
@@ -107,7 +108,7 @@ export default async function TeamPage() {
       {/* ページタイトル */}
       <div>
         <h1 className="text-2xl font-bold">チーム成績</h1>
-        <p className="text-sm text-muted-foreground">2025-26シーズン</p>
+        <p className="text-sm text-muted-foreground">{getCurrentSeasonName()}シーズン</p>
       </div>
 
       {/* ================================================

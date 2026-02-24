@@ -5,6 +5,7 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentSeasonId } from "./season";
 import type { Game, GameDetail, GameWithOpponent, HomeAway } from "@/lib/types/database";
 
 // ================================================
@@ -27,14 +28,18 @@ export type GameFilter = {
  */
 export async function getLatestGame(): Promise<GameWithOpponent | null> {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("games")
     .select("*, opponent:teams!opponent_team_id(*)")
     .eq("status", "FINAL")
     .order("game_date", { ascending: false })
-    .limit(1)
-    .single();
+    .limit(1);
+
+  if (seasonId) query = query.eq("season_id", seasonId);
+
+  const { data, error } = await query.single();
 
   if (error || !data) return null;
   return data as unknown as GameWithOpponent;
@@ -45,14 +50,18 @@ export async function getLatestGame(): Promise<GameWithOpponent | null> {
  */
 export async function getNextGame(): Promise<GameWithOpponent | null> {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("games")
     .select("*, opponent:teams!opponent_team_id(*)")
     .eq("status", "SCHEDULED")
     .order("game_date", { ascending: true })
-    .limit(1)
-    .single();
+    .limit(1);
+
+  if (seasonId) query = query.eq("season_id", seasonId);
+
+  const { data, error } = await query.single();
 
   if (error || !data) return null;
   return data as unknown as GameWithOpponent;
@@ -63,11 +72,17 @@ export async function getNextGame(): Promise<GameWithOpponent | null> {
  */
 export async function getGames(filter?: GameFilter): Promise<GameWithOpponent[]> {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
   let query = supabase
     .from("games")
     .select("*, opponent:teams!opponent_team_id(*)")
     .order("game_date", { ascending: false });
+
+  // シーズンフィルタ
+  if (seasonId) {
+    query = query.eq("season_id", seasonId);
+  }
 
   // 月フィルタ（game_date の月部分で絞る）
   if (filter?.month && filter.month !== "all") {
@@ -193,13 +208,18 @@ export async function getScoreTrend(
   count: number = 10
 ): Promise<{ game: GameWithOpponent; exScore: number; oppScore: number; win: boolean }[]> {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("games")
     .select("*, opponent:teams!opponent_team_id(*)")
     .eq("status", "FINAL")
     .order("game_date", { ascending: false })
     .limit(count);
+
+  if (seasonId) query = query.eq("season_id", seasonId);
+
+  const { data, error } = await query;
 
   if (error || !data) return [];
 
@@ -218,13 +238,18 @@ export async function getScoreTrend(
  */
 export async function getCurrentStreak(): Promise<{ type: "W" | "L"; count: number }> {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("games")
     .select("*")
     .eq("status", "FINAL")
     .order("game_date", { ascending: false })
     .limit(20);
+
+  if (seasonId) query = query.eq("season_id", seasonId);
+
+  const { data, error } = await query;
 
   if (error || !data || data.length === 0) return { type: "W", count: 0 };
 

@@ -7,6 +7,7 @@ B.LEAGUE公式サイト データ取得モジュール
 
 import json
 import re
+from datetime import datetime, timezone, timedelta
 from bs4 import BeautifulSoup
 
 from src.utils.http import get
@@ -18,11 +19,26 @@ TEAM_ID = 714
 # B.LEAGUE公式サイトベースURL
 BASE_URL = "https://www.bleague.jp"
 
-# 現在のシーズン開始年
-CURRENT_SEASON_YEAR = 2025
-
 # B2リーグ戦のイベントID
 B2_EVENT_ID = 7
+
+# 日本時間
+_JST = timezone(timedelta(hours=9))
+
+
+def get_current_season_year() -> int:
+    """
+    現在のシーズン開始年を動的に算出する
+
+    B.LEAGUEのシーズンは10月〜翌年5月。
+    - 10月〜12月 → その年がシーズン開始年（例: 2025年10月 → 2025）
+    - 1月〜9月  → 前年がシーズン開始年（例: 2026年2月 → 2025）
+
+    Returns:
+        シーズン開始年（例: 2025 は 2025-26シーズンを意味する）
+    """
+    now = datetime.now(_JST)
+    return now.year if now.month >= 10 else now.year - 1
 
 
 def fetch_schedule(
@@ -47,12 +63,13 @@ def fetch_schedule(
     games: list[dict] = []
     index = 1
     errors: list[dict] = []
+    season_year = get_current_season_year()
 
     while True:
         # tab=2 が B2タブの指定（必須）
         url = (
             f"{BASE_URL}/schedule/?data_format=json"
-            f"&year={CURRENT_SEASON_YEAR}"
+            f"&year={season_year}"
             f"&event={B2_EVENT_ID}"
             f"&club={TEAM_ID}"
             f"&tab=2"
@@ -377,10 +394,12 @@ def fetch_standings() -> dict:
     B2順位表を取得する
 
     SSR HTMLをパースしてB2全チームの順位・勝敗データを抽出する。
-    B2は複数カンファレンスに分かれているため、全テーブルをパースする。
+    B2は東地区・西地区・ワイルドカードの3テーブル構成。
+    東地区（テーブル1）、西地区（テーブル2）の地区情報をタグ付けし、
+    ワイルドカード（テーブル3）は重複のためスキップする。
 
     Returns:
-        順位表データ
+        順位表データ（各チームにdivisionフィールド付き）
     """
     url = f"{BASE_URL}/standings/?tab=2"
     errors: list[dict] = []
@@ -394,7 +413,7 @@ def fetch_standings() -> dict:
     soup = BeautifulSoup(html, "html.parser")
     standings: list[dict] = []
 
-    # 全テーブルから順位表を探す（B2は複数カンファレンスに分かれている）
+    # 全テーブルから順位表を探す（B2は東地区・西地区・ワイルドカード）
     tables = soup.find_all("table")
     standings_tables = []
     for t in tables:
@@ -407,11 +426,16 @@ def fetch_standings() -> dict:
         errors.append({"source": "standings", "message": "順位表テーブルが見つかりません"})
         return {"standings": [], "errors": errors}
 
-    # 重複排除用（複数テーブルに同じチームが出る場合、最初の出現を優先）
+    # テーブル順で地区を決定（東地区→西地区→ワイルドカード）
+    DIVISION_MAP = {0: "東地区", 1: "西地区"}
+
+    # 重複排除用（ワイルドカードテーブルの重複チームをスキップ）
     seen_team_ids: set[int] = set()
 
-    # 全テーブルの行をパースする
-    for table in standings_tables:
+    for table_idx, table in enumerate(standings_tables):
+        # 地区名を決定（3番目以降のテーブルはワイルドカード → 重複なのでスキップ）
+        division = DIVISION_MAP.get(table_idx)
+
         rows = table.find_all("tr")[1:]  # ヘッダー行をスキップ
 
         for row in rows:
@@ -430,7 +454,7 @@ def fetch_standings() -> dict:
 
                 cell_texts = [c.get_text(strip=True) for c in cells]
 
-                # 重複チーム（複数テーブルに出現）をスキップ
+                # 重複チーム（ワイルドカードテーブルに再出現）をスキップ
                 if team_id and team_id in seen_team_ids:
                     continue
                 if team_id:
@@ -445,6 +469,7 @@ def fetch_standings() -> dict:
                     "rank": _safe_int(cell_texts[0]) if cell_texts[0].isdigit() else None,
                     "team_name": cell_texts[1] if len(cell_texts) > 1 else "",
                     "team_id": team_id,
+                    "division": division,
                     "wins": _safe_int(cell_texts[2]) if len(cell_texts) > 2 else 0,
                     "losses": _safe_int(cell_texts[3]) if len(cell_texts) > 3 else 0,
                     "win_pct": _safe_float(cell_texts[4]) if len(cell_texts) > 4 else None,
@@ -459,6 +484,90 @@ def fetch_standings() -> dict:
                 errors.append({"source": "standings.row", "message": str(e)})
 
     return {"standings": standings, "total": len(standings), "errors": errors}
+
+
+def fetch_roster() -> dict:
+    """
+    横浜エクセレンスのロスター（選手一覧）を取得する
+
+    B.LEAGUE公式サイトのチームロスターページから
+    全選手のPlayerID・名前・ポジション・背番号を抽出する。
+    選手プロフィール（身長・体重・出身地）も個別ページから取得する。
+
+    Returns:
+        ロスターデータ（players配列）
+    """
+    url = f"{BASE_URL}/roster/?TeamID={TEAM_ID}"
+    errors: list[dict] = []
+
+    try:
+        response = get(url, timeout=30)
+        html = response.text
+    except Exception as e:
+        return {"error": str(e), "players": []}
+
+    soup = BeautifulSoup(html, "html.parser")
+    players: list[dict] = []
+
+    # 選手カード要素を全て取得
+    player_links = soup.find_all("a", class_="playerInfo-player")
+
+    for link in player_links:
+        try:
+            # PlayerIDをリンクURLから抽出
+            href = link.get("href", "")
+            pid_match = re.search(r"PlayerID=(\d+)", href)
+            player_id = pid_match.group(1) if pid_match else None
+
+            # 選手名
+            name_elem = link.find(class_="playerInfo-player-name")
+            name = name_elem.get_text(strip=True) if name_elem else ""
+
+            # ポジション・背番号（「ポジション：PG #0」形式）
+            pos_elem = link.find(class_="playerInfo-player-position")
+            position = None
+            number = None
+            if pos_elem:
+                span = pos_elem.find("span")
+                if span:
+                    pos_text = span.get_text(strip=True)
+                    # 「PG/SG #5」→ ポジション="PG/SG", 背番号="5"
+                    parts = pos_text.split("#")
+                    if len(parts) >= 2:
+                        position = parts[0].strip()
+                        try:
+                            number = int(parts[1].strip())
+                        except ValueError:
+                            pass
+                    elif parts[0].strip():
+                        position = parts[0].strip()
+
+            # ポジションをプライマリに正規化（PG/SG → PG）
+            normalized_position = _normalize_position(position) if position else None
+
+            players.append({
+                "player_id": player_id,
+                "name": name,
+                "position": normalized_position,
+                "position_raw": position,
+                "number": number,
+            })
+        except Exception as e:
+            errors.append({"source": "roster.player", "message": str(e)})
+
+    return {"players": players, "total": len(players), "errors": errors}
+
+
+def _normalize_position(position: str | None) -> str | None:
+    """
+    複合ポジション表記をプライマリポジションに正規化する
+
+    例: "PG/SG" → "PG", "C/PF" → "C", "SF/PF" → "SF"
+    """
+    if not position:
+        return None
+    # スラッシュで分割して最初のポジションを返す
+    return position.split("/")[0].strip()
 
 
 def fetch_player_stats(player_id: str) -> dict:

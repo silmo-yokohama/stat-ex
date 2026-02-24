@@ -56,7 +56,7 @@ export function ScoreTrendChart({ data }: Props) {
           tickLine={false}
         />
         <YAxis
-          domain={["auto", "auto"]}
+          domain={[30, "auto"]}
           tick={{ fontSize: 11, fill: "#606060" }}
           axisLine={false}
           tickLine={false}

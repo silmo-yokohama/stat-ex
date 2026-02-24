@@ -16,6 +16,7 @@ from src.sources.bleague import (
     fetch_schedule,
     fetch_box_score,
     fetch_standings,
+    get_current_season_year,
 )
 from src.sources.sportsnavi import (
     fetch_head_to_head,
@@ -57,8 +58,9 @@ class LookupCache:
 
     def _load(self) -> None:
         """マスタデータをDBから読み込む"""
-        # シーズンID（2025-26シーズン）
-        res = self.client.table("seasons").select("id").eq("year", 2025).execute()
+        # 現在のシーズン開始年から season_id を取得
+        season_year = get_current_season_year()
+        res = self.client.table("seasons").select("id").eq("year", season_year).execute()
         if res.data:
             self.season_id = res.data[0]["id"]
 
@@ -504,7 +506,7 @@ def _upsert_games(client: Client, cache: LookupCache, data: dict) -> list[str]:
 
 
 def _upsert_standings(client: Client, cache: LookupCache, data: dict) -> None:
-    """順位表をSupabaseに格納する"""
+    """順位表をSupabaseに格納する（地区情報付き）"""
     standings = data.get("standings", [])
     count = 0
     for s in standings:
@@ -514,21 +516,26 @@ def _upsert_standings(client: Client, cache: LookupCache, data: dict) -> None:
             continue
 
         try:
+            record: dict = {
+                "season_id": cache.season_id,
+                "team_id": team_uuid,
+                "rank": s.get("rank"),
+                "wins": s.get("wins", 0),
+                "losses": s.get("losses", 0),
+                "win_pct": s.get("win_pct"),
+                "games_behind": s.get("games_behind"),
+                "points_for": s.get("points_for"),
+                "points_against": s.get("points_against"),
+                "point_diff": s.get("point_diff"),
+                "streak": s.get("streak"),
+                "last5": s.get("last5"),
+            }
+            # 地区情報が取得できた場合のみ追加
+            if s.get("division"):
+                record["division"] = s["division"]
+
             client.table("standings").upsert(
-                {
-                    "season_id": cache.season_id,
-                    "team_id": team_uuid,
-                    "rank": s.get("rank"),
-                    "wins": s.get("wins", 0),
-                    "losses": s.get("losses", 0),
-                    "win_pct": s.get("win_pct"),
-                    "games_behind": s.get("games_behind"),
-                    "points_for": s.get("points_for"),
-                    "points_against": s.get("points_against"),
-                    "point_diff": s.get("point_diff"),
-                    "streak": s.get("streak"),
-                    "last5": s.get("last5"),
-                },
+                record,
                 on_conflict="season_id,team_id",
             ).execute()
             count += 1

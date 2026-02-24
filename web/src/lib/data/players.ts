@@ -7,6 +7,7 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentSeasonId } from "./season";
 import type { Player, PlayerWithSeason, BoxScore, Game } from "@/lib/types/database";
 
 // ================================================
@@ -42,12 +43,18 @@ export type PlayerSeasonAverage = {
  */
 export async function getPlayers(position?: string): Promise<PlayerWithSeason[]> {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
   let query = supabase
     .from("players")
     .select("*, player_seasons!inner(*)")
     .eq("player_seasons.is_active", true)
     .order("number", { ascending: true });
+
+  // シーズンフィルタ（当該シーズンに在籍する選手のみ）
+  if (seasonId) {
+    query = query.eq("player_seasons.season_id", seasonId);
+  }
 
   // ポジションフィルタ
   if (position && position !== "ALL") {
@@ -91,8 +98,17 @@ export async function getPlayerById(playerId: string): Promise<PlayerWithSeason 
  */
 export async function getPlayerAverage(playerId: string): Promise<PlayerSeasonAverage | null> {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
-  const { data, error } = await supabase.from("box_scores").select("*").eq("player_id", playerId);
+  // box_scores を games 経由でシーズンフィルタ
+  let query = supabase
+    .from("box_scores")
+    .select("*, game:games!inner(season_id)")
+    .eq("player_id", playerId);
+
+  if (seasonId) query = query.eq("game.season_id", seasonId);
+
+  const { data, error } = await query;
 
   if (error || !data || data.length === 0) return null;
 
@@ -106,16 +122,26 @@ export async function getAllPlayerAverages(): Promise<
   (PlayerSeasonAverage & { player: Player })[]
 > {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
-  // アクティブ選手の一覧と全ボックススコアを取得
-  const [playersRes, boxRes] = await Promise.all([
-    supabase
-      .from("players")
-      .select("*, player_seasons!inner(*)")
-      .eq("player_seasons.is_active", true)
-      .order("number", { ascending: true }),
-    supabase.from("box_scores").select("*"),
-  ]);
+  // アクティブ選手の一覧と当該シーズンのボックススコアを取得
+  let playersQuery = supabase
+    .from("players")
+    .select("*, player_seasons!inner(*)")
+    .eq("player_seasons.is_active", true)
+    .order("number", { ascending: true });
+
+  // box_scores は games 経由でシーズンを絞る
+  let boxQuery = supabase
+    .from("box_scores")
+    .select("*, game:games!inner(season_id)");
+
+  if (seasonId) {
+    playersQuery = playersQuery.eq("player_seasons.season_id", seasonId);
+    boxQuery = boxQuery.eq("game.season_id", seasonId);
+  }
+
+  const [playersRes, boxRes] = await Promise.all([playersQuery, boxQuery]);
 
   if (playersRes.error || !playersRes.data) return [];
   if (boxRes.error || !boxRes.data) return [];
@@ -142,13 +168,18 @@ export async function getPlayerGameLog(
   (BoxScore & { game_date: string; opponent_name: string; home_away: string; result: string })[]
 > {
   const supabase = await createClient();
+  const seasonId = await getCurrentSeasonId();
 
-  // ボックススコアと試合情報を取得
-  const { data, error } = await supabase
+  // ボックススコアと試合情報を取得（シーズンフィルタ付き）
+  let query = supabase
     .from("box_scores")
-    .select("*, game:games(*, opponent:teams!opponent_team_id(short_name))")
+    .select("*, game:games!inner(*, opponent:teams!opponent_team_id(short_name))")
     .eq("player_id", playerId)
     .order("game(game_date)", { ascending: false });
+
+  if (seasonId) query = query.eq("game.season_id", seasonId);
+
+  const { data, error } = await query;
 
   if (error || !data) return [];
 

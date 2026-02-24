@@ -67,7 +67,7 @@ export default function OGImage() {
           color: "rgba(255,255,255,0.6)",
         }}
       >
-        5クリックかかる情報を1クリックで
+        横浜EX データベース
       </div>
 
       {/* リーグ表示 */}

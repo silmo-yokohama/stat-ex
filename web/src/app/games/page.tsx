@@ -4,6 +4,7 @@ import { Icon } from "@/components/ui/Icon";
 
 import { getGames, getTeamStats } from "@/lib/data";
 import { isWin, getExScore, getOppScore } from "@/lib/data/games";
+import { getCurrentSeasonName } from "@/lib/constants";
 import type { GameWithOpponent, TeamStats } from "@/lib/types/database";
 
 import { Badge } from "@/components/ui/badge";
@@ -266,18 +267,21 @@ export default async function GamesPage() {
       {/* ページヘッダー */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">試合一覧</h1>
-        <p className="text-sm text-muted-foreground">2025-26 シーズン</p>
+        <p className="text-sm text-muted-foreground">{getCurrentSeasonName()} シーズン</p>
       </div>
 
       {/* シーズン概要カード */}
       <SeasonSummaryCards teamStats={teamStats} />
 
-      {/* シーズン戦績チャート（旧ストリークバーの代替） */}
+      {/* 勝敗ストリークバー（全試合の勝ち負けを一覧表示） */}
       <section className="rounded-xl border border-border bg-card p-4">
-        <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+        <h2 className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
           <Icon name="timeline" size={16} />
-          シーズン戦績
+          勝敗タイムライン
         </h2>
+        <p className="mb-3 text-[11px] text-muted-foreground">
+          緑=勝ち / グレー=負け / 枠線のみ=予定 ・ ホバーで詳細
+        </p>
         <SeasonRecordChart data={seasonRecordData} />
       </section>
 

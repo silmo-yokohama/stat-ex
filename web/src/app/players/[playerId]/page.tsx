@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPlayerById, getPlayerAverage, getPlayerGameLog } from "@/lib/data";
+import { getCurrentSeasonName } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/Icon";
 import { Separator } from "@/components/ui/separator";
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: `${player.name} - 選手詳細`,
-    description: `${player.name}（#${player.number ?? "-"}）の2025-26シーズン成績詳細。`,
+    description: `${player.name}（#${player.number ?? "-"}）の${getCurrentSeasonName()}シーズン成績詳細。`,
   };
 }
 

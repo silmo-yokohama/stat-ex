@@ -14,7 +14,7 @@
 
 import Link from "next/link";
 
-import { SITE, TEAM } from "@/lib/constants";
+import { TEAM } from "@/lib/constants";
 import { Icon } from "@/components/ui/Icon";
 import {
   getLatestGame,
@@ -153,11 +153,6 @@ export default async function Home() {
 
   return (
     <div className="space-y-6">
-      {/* ページタイトル */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">{TEAM.name}</h1>
-        <p className="text-sm text-muted-foreground">{SITE.concept}</p>
-      </div>
 
       {/* ========================================
        * セクション1: Heroカード（直近試合 / 次の試合）

@@ -20,3 +20,5 @@ export {
 } from "./team";
 
 export { getNews, getVideos, getMascot } from "./content";
+
+export { getCurrentSeasonId } from "./season";

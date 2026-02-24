@@ -9,10 +9,14 @@
  * - 横軸: 試合数（1, 2, 3, ...）
  * - 縦軸: 貯金/借金数 = (累積勝数 - 累積敗数) / 2
  * - 横浜EX: 太い緑色の実線（実際の試合データから計算）
- * - 他チーム: 細い色付きの線（最終成績から線形補間）
+ * - 東地区チーム: 青系の線
+ * - 西地区チーム: 暖色系の線
  * - 0ライン（.500基準）を ReferenceLine で明示
+ *
+ * タブで「全チーム」「東地区」「西地区」を切り替え可能。
  */
 
+import { useState } from "react";
 import {
   LineChart,
   Line,
@@ -23,6 +27,7 @@ import {
   ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
+import type { B2Division } from "@/lib/constants";
 
 // ================================================
 // 型定義
@@ -34,6 +39,8 @@ export type PennantRaceTeam = {
   teamName: string;
   /** 横浜EXかどうか（ハイライト用） */
   isExcellence: boolean;
+  /** 所属地区（東地区/西地区） */
+  division: B2Division | null;
   /** 試合毎の累積gamesAbove500: [第1試合後, 第2試合後, ...] */
   progression: number[];
 };
@@ -43,6 +50,9 @@ type Props = {
   teams: PennantRaceTeam[];
 };
 
+/** タブのフィルタ選択肢 */
+type DivisionFilter = "全チーム" | "東地区" | "西地区";
+
 // ================================================
 // 定数
 // ================================================
@@ -51,25 +61,37 @@ type Props = {
 const COLOR_EX = "#006d3b";
 
 /**
- * 他チーム用の13色パレット
- *
- * 各チームを視覚的に区別するための色セット。
- * 横浜EX以外の最大13チーム分を用意。
+ * 東地区チーム用の色パレット（青系）
+ * 横浜EX以外の東地区6チーム分
  */
-const TEAM_PALETTE = [
-  "#8B5CF6", // パープル
-  "#F97316", // オレンジ
+const EAST_PALETTE = [
   "#3B82F6", // ブルー
+  "#6366F1", // インディゴ
+  "#8B5CF6", // パープル
+  "#06B6D4", // シアン
+  "#14B8A6", // ティール
+  "#84CC16", // ライム
+];
+
+/**
+ * 西地区チーム用の色パレット（暖色系）
+ * 西地区7チーム分
+ */
+const WEST_PALETTE = [
+  "#F97316", // オレンジ
+  "#EF4444", // レッド
   "#EC4899", // ピンク
   "#EAB308", // イエロー
-  "#14B8A6", // ティール
-  "#EF4444", // レッド
-  "#A855F7", // バイオレット
-  "#6366F1", // インディゴ
-  "#84CC16", // ライム
   "#F59E0B", // アンバー
-  "#06B6D4", // シアン
+  "#A855F7", // バイオレット
   "#78716C", // ストーン
+];
+
+/** タブ選択肢 */
+const FILTER_TABS: { label: string; value: DivisionFilter }[] = [
+  { label: "全チーム", value: "全チーム" },
+  { label: "東地区", value: "東地区" },
+  { label: "西地区", value: "西地区" },
 ];
 
 /** ツールチップの共通スタイル */
@@ -95,7 +117,6 @@ function formatGamesAbove(v: number): string {
  * カスタムツールチップ
  *
  * 横浜EXを先頭に太字表示し、他チームは値の降順で表示する。
- * ※ ESLint react-hooks/static-components 対策でコンポーネント外に定義
  */
 function PennantTooltip({
   active,
@@ -176,19 +197,30 @@ function PennantTooltip({
  * ペナントレースチャート
  *
  * 全チームの貯金/借金推移を折れ線で重ねて表示する。
- * 横浜EXの線は太く緑色でハイライトし、他チームは細い色付き線で背景に配置。
+ * 横浜EXは太い緑色でハイライト、東地区は青系、西地区は暖色系で色分け。
+ * タブで地区別にフィルタリング可能。
  *
- * @param teams - 全チームの推移データ
+ * @param teams - 全チームの推移データ（地区情報付き）
  */
 export function GamesAbove500Chart({ teams }: Props) {
+  const [filter, setFilter] = useState<DivisionFilter>("全チーム");
+
+  // フィルタに応じてチームを絞り込む
+  const filteredTeams = teams.filter((t) => {
+    if (filter === "全チーム") return true;
+    // 横浜EXは常に表示
+    if (t.isExcellence) return true;
+    return t.division === filter;
+  });
+
   // Recharts用のフラットデータ構造に変換
-  // 各データポイント: { game: 1, "横浜EX": 0.5, "千葉": 0.29, ... }
-  const maxGames = Math.max(...teams.map((t) => t.progression.length), 0);
+  // 各データポイント: { game: 1, "横浜EX": 0.5, "信州": 0.29, ... }
+  const maxGames = Math.max(...filteredTeams.map((t) => t.progression.length), 0);
   const chartData: Record<string, number | string>[] = [];
 
   for (let i = 0; i < maxGames; i++) {
     const point: Record<string, number | string> = { game: i + 1 };
-    for (const team of teams) {
+    for (const team of filteredTeams) {
       if (i < team.progression.length) {
         point[team.teamName] = team.progression[i];
       }
@@ -197,85 +229,112 @@ export function GamesAbove500Chart({ teams }: Props) {
   }
 
   // 横浜EXと他チームを分離（横浜EXを最後にレンダリング → 最前面に表示）
-  const exTeam = teams.find((t) => t.isExcellence);
-  const otherTeams = teams.filter((t) => !t.isExcellence);
+  const exTeam = filteredTeams.find((t) => t.isExcellence);
+  const otherTeams = filteredTeams.filter((t) => !t.isExcellence);
 
-  // 他チームへの色割り当て
+  // 地区別に色を割り当て（東=青系、西=暖色系）
   const teamColorMap: Record<string, string> = {};
-  otherTeams.forEach((t, i) => {
-    teamColorMap[t.teamName] = TEAM_PALETTE[i % TEAM_PALETTE.length];
-  });
+  let eastIdx = 0;
+  let westIdx = 0;
+  for (const t of otherTeams) {
+    if (t.division === "東地区") {
+      teamColorMap[t.teamName] = EAST_PALETTE[eastIdx % EAST_PALETTE.length];
+      eastIdx++;
+    } else {
+      teamColorMap[t.teamName] = WEST_PALETTE[westIdx % WEST_PALETTE.length];
+      westIdx++;
+    }
+  }
 
   return (
-    <ResponsiveContainer width="100%" height={350}>
-      <LineChart data={chartData} margin={{ top: 16, right: 16, left: 4, bottom: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e2e4e6" />
-
-        {/* X軸: 試合数 */}
-        <XAxis
-          dataKey="game"
-          tick={{ fontSize: 11, fill: "#606060" }}
-          axisLine={{ stroke: "#e2e4e6" }}
-          tickLine={false}
-        />
-
-        {/* Y軸: 貯金/借金数 */}
-        <YAxis
-          tick={{ fontSize: 11, fill: "#606060" }}
-          axisLine={false}
-          tickLine={false}
-          width={35}
-          tickFormatter={(v: number) => formatGamesAbove(v)}
-        />
-
-        {/* ツールチップ */}
-        <Tooltip content={<PennantTooltip exTeamName={exTeam?.teamName} />} />
-
-        {/* .500ライン（基準線） */}
-        <ReferenceLine
-          y={0}
-          stroke="#374151"
-          strokeWidth={1.5}
-          strokeDasharray="4 4"
-          label={{
-            value: ".500",
-            position: "right",
-            style: { fontSize: 10, fill: "#606060" },
-          }}
-        />
-
-        {/* 他チームの線（先にレンダリング → 背面に配置） */}
-        {otherTeams.map((team) => (
-          <Line
-            key={team.teamName}
-            type="monotone"
-            dataKey={team.teamName}
-            stroke={teamColorMap[team.teamName]}
-            strokeWidth={1.2}
-            strokeOpacity={0.4}
-            dot={false}
-            activeDot={{ r: 3, strokeWidth: 1 }}
-            connectNulls={false}
-          />
+    <div>
+      {/* 地区フィルタタブ */}
+      <div className="mb-4 flex gap-2">
+        {FILTER_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setFilter(tab.value)}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+              filter === tab.value
+                ? "bg-[#006d3b] text-white"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+          >
+            {tab.label}
+          </button>
         ))}
+      </div>
 
-        {/* 横浜EXの線（最後にレンダリング → 最前面に表示） */}
-        {exTeam && (
-          <Line
-            type="monotone"
-            dataKey={exTeam.teamName}
-            stroke={COLOR_EX}
-            strokeWidth={3}
-            dot={false}
-            activeDot={{
-              r: 5,
-              stroke: COLOR_EX,
-              strokeWidth: 2,
-              fill: "#fff",
+      <ResponsiveContainer width="100%" height={350}>
+        <LineChart data={chartData} margin={{ top: 16, right: 16, left: 4, bottom: 8 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e2e4e6" />
+
+          {/* X軸: 試合数 */}
+          <XAxis
+            dataKey="game"
+            tick={{ fontSize: 11, fill: "#606060" }}
+            axisLine={{ stroke: "#e2e4e6" }}
+            tickLine={false}
+          />
+
+          {/* Y軸: 貯金/借金数 */}
+          <YAxis
+            tick={{ fontSize: 11, fill: "#606060" }}
+            axisLine={false}
+            tickLine={false}
+            width={35}
+            tickFormatter={(v: number) => formatGamesAbove(v)}
+          />
+
+          {/* ツールチップ */}
+          <Tooltip content={<PennantTooltip exTeamName={exTeam?.teamName} />} />
+
+          {/* .500ライン（基準線） */}
+          <ReferenceLine
+            y={0}
+            stroke="#374151"
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
+            label={{
+              value: ".500",
+              position: "right",
+              style: { fontSize: 10, fill: "#606060" },
             }}
           />
-        )}
-      </LineChart>
-    </ResponsiveContainer>
+
+          {/* 他チームの線（先にレンダリング → 背面に配置） */}
+          {otherTeams.map((team) => (
+            <Line
+              key={team.teamName}
+              type="monotone"
+              dataKey={team.teamName}
+              stroke={teamColorMap[team.teamName]}
+              strokeWidth={1.2}
+              strokeOpacity={0.5}
+              dot={false}
+              activeDot={{ r: 3, strokeWidth: 1 }}
+              connectNulls={false}
+            />
+          ))}
+
+          {/* 横浜EXの線（最後にレンダリング → 最前面に表示） */}
+          {exTeam && (
+            <Line
+              type="monotone"
+              dataKey={exTeam.teamName}
+              stroke={COLOR_EX}
+              strokeWidth={3}
+              dot={false}
+              activeDot={{
+                r: 5,
+                stroke: COLOR_EX,
+                strokeWidth: 2,
+                fill: "#fff",
+              }}
+            />
+          )}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
