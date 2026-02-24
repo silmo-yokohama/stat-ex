@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getPlayerById, getPlayerAverage, getPlayerGameLog } from "@/lib/data";
+import { getPlayerById, getPlayerAverage, getPlayerGameLog, getInjuries } from "@/lib/data";
 import { getCurrentSeasonName } from "@/lib/constants";
 import { CHART_HELP, PLAYER_STATS } from "@/lib/glossary";
 import { Badge } from "@/components/ui/badge";
@@ -98,17 +98,21 @@ function ShootingBar({
 export default async function PlayerDetailPage({ params }: Props) {
   const { playerId } = await params;
 
-  // 選手情報・シーズン平均・試合ログを並行取得
-  const [player, average, gameLog] = await Promise.all([
+  // 選手情報・シーズン平均・試合ログ・ケガ人リストを並行取得
+  const [player, average, gameLog, injuries] = await Promise.all([
     getPlayerById(playerId),
     getPlayerAverage(playerId),
     getPlayerGameLog(playerId),
+    getInjuries(),
   ]);
 
   // 選手が見つからない場合は404
   if (!player) {
     notFound();
   }
+
+  // この選手がInjury Listに登録されているかチェック
+  const injury = injuries.find((inj) => inj.player_id === playerId);
 
   // レーダーチャート用データ: 各スタッツを0-100にスケーリング（チーム内相対評価）
   // rawValue に元の実数値を保持し、ツールチップで表示する
@@ -178,6 +182,20 @@ export default async function PlayerDetailPage({ params }: Props) {
           </div>
         </div>
       </section>
+
+      {/* ================================================
+       * Injury List バナー
+       * この選手がケガ人リストに登録されている場合に警告バナーを表示
+       * ================================================ */}
+      {injury && (
+        <section className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+          <Icon name="healing" size={22} className="shrink-0 text-amber-600" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-amber-800">Injury List 登録中</p>
+            <p className="text-xs text-amber-700">{injury.reason}（{injury.registered_date} 登録）</p>
+          </div>
+        </section>
+      )}
 
       {/* スタッツが取得できない場合のフォールバック */}
       {!average ? (

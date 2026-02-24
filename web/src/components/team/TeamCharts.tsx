@@ -35,9 +35,9 @@ type TeamHomeAwayDonutProps = {
   awayLosses: number;
 };
 
-/** 累積勝利数チャートのProps */
+/** 累積勝利数チャートのProps（wins=null は未消化試合） */
 type TeamCumulativeWinsProps = {
-  data: { game: number; wins: number; ideal: number }[];
+  data: { game: number; wins: number | null; ideal: number }[];
 };
 
 // ================================================

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   getTeamStats,
   getStandings,
@@ -34,31 +35,48 @@ export const metadata: Metadata = {
 /**
  * 全試合データから累積勝利数を計算する
  *
- * 終了済みの試合を日付昇順に並べ、1試合ずつ勝利を積み上げる。
- * 理想ペース（勝率60%想定）を破線で比較するためのデータも同時に生成する。
+ * シーズン全日程（終了済み + 未消化）を横軸に表示するため、
+ * 終了済みの試合には累積勝利数を、未消化の試合にはnullを設定する。
+ * 理想ペース（勝率60%想定）はシーズン全日程分を生成する。
  *
  * @param games - 全試合データ（GameWithOpponent配列）
- * @returns 試合番号・累積勝利数・理想ペースの配列
+ * @returns 試合番号・累積勝利数（null=未消化）・理想ペースの配列
  */
-function buildCumulativeWins(games: Game[]): { game: number; wins: number; ideal: number }[] {
+function buildCumulativeWins(
+  games: Game[]
+): { game: number; wins: number | null; ideal: number }[] {
+  const totalGames = games.length;
+
   // 終了済み試合を日付昇順でソート
   const finished = games
     .filter((g) => g.status === "FINAL")
     .sort((a, b) => a.game_date.localeCompare(b.game_date));
 
+  const data: { game: number; wins: number | null; ideal: number }[] = [];
   let wins = 0;
 
-  return finished.map((g, i) => {
+  // 終了済み試合: 累積勝利数を計算
+  finished.forEach((g, i) => {
     const isWinResult = isWin(g);
     if (isWinResult) wins++;
 
-    return {
+    data.push({
       game: i + 1,
       wins,
-      // 理想ペース: 勝率60%で推移した場合の累積勝利数
       ideal: Math.round((i + 1) * 0.6 * 10) / 10,
-    };
+    });
   });
+
+  // 未消化試合: 理想ペースのみ表示（累積勝利数はnull）
+  for (let i = finished.length; i < totalGames; i++) {
+    data.push({
+      game: i + 1,
+      wins: null,
+      ideal: Math.round((i + 1) * 0.6 * 10) / 10,
+    });
+  }
+
+  return data;
 }
 
 /**
@@ -328,9 +346,10 @@ export default async function TeamPage() {
         ) : (
           <div className="space-y-3">
             {injuries.map((injury) => (
-              <div
+              <Link
                 key={injury.id}
-                className="flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-4"
+                href={`/players/${injury.player_id}`}
+                className="flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-4 transition-shadow hover:shadow-md"
               >
                 {/* 背番号 */}
                 <span className="font-display text-2xl text-[#9CA3AF]">
@@ -349,7 +368,10 @@ export default async function TeamPage() {
                 <span className="shrink-0 text-xs text-muted-foreground">
                   {injury.registered_date}
                 </span>
-              </div>
+
+                {/* 矢印アイコン */}
+                <Icon name="chevron_right" size={18} className="shrink-0 text-muted-foreground" />
+              </Link>
             ))}
           </div>
         )}

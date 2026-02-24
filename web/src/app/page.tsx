@@ -24,12 +24,14 @@ import {
   getTeamLeaders,
   getNews,
   getGames,
+  getInjuries,
 } from "@/lib/data";
 import { getScoreTrend, getCurrentStreak, isWin, getExScore, getOppScore } from "@/lib/data/games";
 import { buildPennantRaceData } from "@/lib/data/pennant-race";
 
 import { CHART_HELP } from "@/lib/glossary";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { ChartHelpButton } from "@/components/ui/ChartHelpButton";
 import { ScoreTrendChart } from "@/components/charts/ScoreTrendChart";
 import { GamesAbove500Chart } from "@/components/charts/GamesAbove500Chart";
@@ -86,6 +88,7 @@ export default async function Home() {
     scoreTrend,
     streak,
     allGames,
+    injuries,
   ] = await Promise.all([
     getLatestGame(),
     getNextGame(),
@@ -97,6 +100,7 @@ export default async function Home() {
     getScoreTrend(10),
     getCurrentStreak(),
     getGames(),
+    getInjuries(),
   ]);
 
   // 順位表から横浜EXの順位を抽出
@@ -445,7 +449,50 @@ export default async function Home() {
       </section>
 
       {/* ========================================
-       * セクション5: クイックリンクバー
+       * セクション5: Injury List
+       * ケガで離脱中の選手をコンパクトに表示し、選手詳細へのリンクを提供
+       * ======================================== */}
+      {injuries.length > 0 && (
+        <section className="rounded-xl border border-border bg-card p-6">
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+            <Icon name="healing" size={20} className="text-primary" />
+            Injury List
+          </h2>
+          <div className="space-y-2">
+            {injuries.map((injury) => (
+              <Link
+                key={injury.id}
+                href={`/players/${injury.player_id}`}
+                className="flex items-center gap-3 rounded-lg border border-border px-4 py-3 transition-shadow hover:shadow-md"
+              >
+                {/* 背番号 */}
+                <span className="font-display text-xl text-[#9CA3AF]">
+                  #{injury.player_number ?? "-"}
+                </span>
+
+                <Separator orientation="vertical" className="h-6" />
+
+                {/* 選手名と理由 */}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground">{injury.player_name}</p>
+                  <p className="text-xs text-muted-foreground">{injury.reason}</p>
+                </div>
+
+                {/* 登録日 */}
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {injury.registered_date}
+                </span>
+
+                {/* 矢印アイコン */}
+                <Icon name="chevron_right" size={16} className="shrink-0 text-muted-foreground" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ========================================
+       * セクション6: クイックリンクバー
        * 主要ページへのショートカット
        * ======================================== */}
       <section className="flex flex-wrap gap-3">

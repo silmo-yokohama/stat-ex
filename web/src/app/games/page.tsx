@@ -5,11 +5,12 @@ import { Icon } from "@/components/ui/Icon";
 import { getGames, getTeamStats } from "@/lib/data";
 import { isWin, getExScore, getOppScore } from "@/lib/data/games";
 import { getCurrentSeasonName } from "@/lib/constants";
-import type { GameWithOpponent, TeamStats } from "@/lib/types/database";
+import type { Game, GameWithOpponent, TeamStats } from "@/lib/types/database";
 
 import { Badge } from "@/components/ui/badge";
-import { SeasonRecordChart } from "@/components/games/SeasonRecordChart";
-import type { SeasonRecordData } from "@/components/games/SeasonRecordChart";
+import { TeamCumulativeWins } from "@/components/team/TeamCharts";
+import { CHART_HELP } from "@/lib/glossary";
+import { ChartHelpButton } from "@/components/ui/ChartHelpButton";
 
 /**
  * P2: 試合一覧ページ
@@ -40,20 +41,41 @@ function formatGameDate(dateString: string): string {
 }
 
 /**
- * 試合データをSeasonRecordChart用のデータに変換する
+ * 全試合データから累積勝利数を計算する
  *
- * 日付の古い順（時系列順）にソートして返す。
+ * シーズン全日程（終了済み + 未消化）を横軸に表示するため、
+ * 終了済みの試合には累積勝利数を、未消化の試合にはnullを設定する。
+ * 理想ペース（勝率60%想定）はシーズン全日程分を生成する。
  */
-function toSeasonRecordData(games: GameWithOpponent[]): SeasonRecordData[] {
-  return [...games]
-    .sort((a, b) => a.game_date.localeCompare(b.game_date))
-    .map((game) => ({
-      date: game.game_date,
-      opponent: game.opponent.short_name,
-      win: isWin(game),
-      exScore: getExScore(game),
-      oppScore: getOppScore(game),
-    }));
+function buildCumulativeWins(
+  games: Game[]
+): { game: number; wins: number | null; ideal: number }[] {
+  const totalGames = games.length;
+  const finished = games
+    .filter((g) => g.status === "FINAL")
+    .sort((a, b) => a.game_date.localeCompare(b.game_date));
+
+  const data: { game: number; wins: number | null; ideal: number }[] = [];
+  let wins = 0;
+
+  finished.forEach((g, i) => {
+    if (isWin(g)) wins++;
+    data.push({
+      game: i + 1,
+      wins,
+      ideal: Math.round((i + 1) * 0.6 * 10) / 10,
+    });
+  });
+
+  for (let i = finished.length; i < totalGames; i++) {
+    data.push({
+      game: i + 1,
+      wins: null,
+      ideal: Math.round((i + 1) * 0.6 * 10) / 10,
+    });
+  }
+
+  return data;
 }
 
 // ================================================
@@ -250,8 +272,8 @@ export default async function GamesPage() {
   // チーム成績と試合一覧を並列で取得
   const [teamStats, games] = await Promise.all([getTeamStats(), getGames()]);
 
-  // チャート用データ（日付の古い順）
-  const seasonRecordData = toSeasonRecordData(games);
+  // 累積勝利数チャート用データ
+  const cumulativeWinsData = buildCumulativeWins(games);
 
   // 終了済み試合（新しい順）と今後の試合（古い順）に分割
   const finishedGames = games
@@ -273,16 +295,17 @@ export default async function GamesPage() {
       {/* シーズン概要カード */}
       <SeasonSummaryCards teamStats={teamStats} />
 
-      {/* 勝敗ストリークバー（全試合の勝ち負けを一覧表示） */}
-      <section className="rounded-xl border border-border bg-card p-4">
-        <h2 className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
-          <Icon name="timeline" size={16} />
-          勝敗タイムライン
+      {/* シーズン推移（累積勝利数チャート） */}
+      <section>
+        <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
+          <Icon name="trending_up" size={20} className="text-primary" />
+          シーズン推移
+          <ChartHelpButton details={CHART_HELP.cumulativeWins.details} />
         </h2>
-        <p className="mb-3 text-[11px] text-muted-foreground">
-          緑=勝ち / グレー=負け / 枠線のみ=予定 ・ ホバーで詳細
+        <p className="mb-4 text-xs text-muted-foreground">
+          {CHART_HELP.cumulativeWins.summary}
         </p>
-        <SeasonRecordChart data={seasonRecordData} />
+        <TeamCumulativeWins data={cumulativeWinsData} />
       </section>
 
       {/* 終了済みの試合セクション */}
